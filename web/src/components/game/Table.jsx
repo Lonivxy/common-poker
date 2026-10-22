@@ -1,14 +1,23 @@
 import { motion } from 'motion/react'
+import { useReducedMotion } from '../../hooks/useReducedMotion'
 import { PlayingCard } from './PlayingCard'
 
 export function Table({ board, pot }) {
+  const reduce = useReducedMotion()
   return <>
-    <div className="absolute left-[11%] right-[11%] top-[14%] bottom-[22%] rounded-[999px] border-[0.14em] border-ink/70 bg-felt portrait:left-[10%] portrait:right-[10%] portrait:top-[18%]" />
-    <div className="absolute inset-x-0 top-[18%] flex items-center justify-center gap-[0.8em] text-[2em] portrait:top-[24%]">
-      <div className="whitespace-nowrap font-mono text-ink">{pot}</div>
+    <div className="table-felt" aria-hidden />
+    <div className="table-pot" aria-label={`Pot ${pot}`}>
+      <span className="table-pot-label">POT</span>
+      <motion.span key={pot} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} transition={{ duration: 0.16 }}>{pot}</motion.span>
     </div>
-    <div className="absolute left-[11%] right-[11%] top-[14%] bottom-[22%] grid place-items-center portrait:left-[10%] portrait:right-[10%] portrait:top-[18%]">
-      <div className="flex gap-[0.4em]">{Array.from({ length: 5 }, (_, i) => board[i] ? <motion.div key={`${i}-${board[i].rank}-${board[i].suit}`} initial={{ opacity: 0, y: '-5.5em' }} animate={{ opacity: [0, 1, 1], y: ['-5.5em', '0.25em', '0em'] }} transition={{ delay: i < 3 ? i * 0.15 : 0, duration: 0.42, times: [0, 0.72, 1], ease: 'easeOut' }}><PlayingCard size="md" {...board[i]} /></motion.div> : <div key={i} className="h-[8em] w-[5.4em] shrink-0 rounded-[0.3em] border border-dashed border-ink/15" />)}</div>
+    <div className="table-board" aria-label="Community cards">
+      {Array.from({ length: 5 }, (_, i) => board[i] ? <motion.div
+        key={`${i}-${board[i].rank}-${board[i].suit}`}
+        initial={{ opacity: 0, transform: reduce ? 'none' : 'translateY(-10px)' }}
+        animate={{ opacity: 1, transform: 'none' }}
+        transition={{ delay: reduce ? 0 : i < 3 ? i * 0.05 : 0, duration: 0.22, ease: [0.23, 1, 0.32, 1] }}
+      ><PlayingCard size="md" {...board[i]} /></motion.div>
+        : <div key={i} className="board-placeholder" aria-hidden />)}
     </div>
   </>
 }
