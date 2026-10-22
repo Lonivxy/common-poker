@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from starlette.websockets import WebSocketDisconnect
 from . import main
 from .test_engine import cards
+from .engine import Game, Player
 
 ORIGIN = {"origin": "http://localhost:5173"}
 
@@ -35,6 +36,38 @@ class WebSocketTestCase(unittest.TestCase):
 
 
 class ServerTests(WebSocketTestCase):
+    def test_lobby_tracks_room_availability_and_host_transfer(self):
+        with contextlib.ExitStack() as stack:
+            a, hosted = self.connect(stack, type="create", room="42", name="Host")
+            response = self.client.get("/rooms", headers=ORIGIN)
+            self.assertEqual(response.headers["cache-control"], "no-store")
+            self.assertEqual(response.json(), {"rooms": [
+                {"room": "42", "host": "Host", "players": 1, "capacity": 4}]})
+            b, _ = self.connect(stack, type="join", room="42", name="Guest")
+            state(a)
+            self.assertEqual(self.client.get("/rooms").json()["rooms"][0]["players"], 2)
+            a.send_json({"type": "start"})
+            current = state(a)
+            state(b)
+            self.assertEqual(self.client.get("/rooms").json(), {"rooms": []})
+            a.send_json({"type": "action", "action": "fold", "turn": current["deadline"]})
+            state(a); state(b)
+            self.assertEqual(len(self.client.get("/rooms").json()["rooms"]), 1)
+            a.close()
+            state(b)
+            self.assertEqual(self.client.get("/rooms").json(), {"rooms": [
+                {"room": "42", "host": "Guest", "players": 1, "capacity": 4}]})
+
+    def test_lobby_omits_full_empty_expired_and_running_tables(self):
+        for code, count in [("1", 4), ("2", 0), ("3", 1), ("4", 2), ("5", 4)]:
+            game = main.rooms[code] = Game(code)
+            game.players = [Player(str(i), "Player") for i in range(count)]
+        main.rooms["3"].updated -= 3601
+        main.rooms["4"].street = "preflop"
+        main.rooms["5"].players[0].connected = False
+        self.assertEqual(self.client.get("/rooms").json(), {"rooms": [
+            {"room": "5", "host": "Player", "players": 3, "capacity": 4}]})
+
     def test_origin_and_cors(self):
         with self.assertRaises(WebSocketDisconnect):
             with self.client.websocket_connect("/ws", headers={"origin": "https://evil.example"}): pass

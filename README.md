@@ -22,6 +22,8 @@ npm run dev
 
 Open `http://localhost:5173`, enter a name and host a room. Enter 1–6 digits to choose a custom room number, or leave it blank for a random number. Occupied numbers are rejected. Share the room number with another player. The host deals when at least two players have chips. Use separate browser tabs to try multiplayer locally.
 
+The home-page lobby refreshes every five seconds and lists tables with an open seat between hands. Enter your name and choose **Join** beside a table, or join by room number. Full tables and hands in progress are omitted; the server rechecks availability when you join. `GET /rooms` returns only room numbers, host display names, and seat counts. Existing reverse proxies must forward `/rooms` to the backend, as shown in `server/deploy/nginx.conf.example`.
+
 For LAN testing, run Vite with `npm run dev -- --host 0.0.0.0`, set backend `HOST=0.0.0.0` and `LOCAL_ORIGIN` to the exact LAN frontend origin (e.g. `http://10.10.23.88:5173`). Without `VITE_API_URL`, the frontend connects to port 8000 on its own hostname. Stop any old localhost-only servers first: separate backend processes have separate rooms.
 
 ## Rules and behavior

@@ -7,7 +7,7 @@ import time
 from collections import deque
 from contextlib import asynccontextmanager, suppress
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from .engine import Game, Player
@@ -132,6 +132,21 @@ app.add_middleware(CORSMiddleware, allow_origins=sorted(ORIGINS), allow_methods=
 @app.get("/health")
 async def health():
     return {"status": "ok", "games": len(rooms)}
+
+
+@app.get("/rooms")
+async def lobby(response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    now = time.monotonic()
+    async with gate:
+        available = []
+        for game in rooms.values():
+            players = [p for p in game.players if p.connected]
+            if (game.street in ("waiting", "showdown") and 0 < len(players) < 4
+                    and now - game.updated <= 3600):
+                available.append({"room": game.code, "host": players[0].name,
+                                  "players": len(players), "capacity": 4})
+    return {"rooms": available}
 
 
 @app.websocket("/ws")
