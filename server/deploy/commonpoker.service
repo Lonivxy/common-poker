@@ -1,0 +1,35 @@
+[Unit]
+Description=Common Poker backend
+After=network.target
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=commonpoker
+Group=commonpoker
+WorkingDirectory=/opt/commonpoker
+Environment=HOST=127.0.0.1
+Environment=PORT=8000
+Environment=FORWARDED_ALLOW_IPS=127.0.0.1
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/commonpoker/.venv/bin/python -m server
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=10
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+UMask=0077
+MemoryMax=256M
+CPUQuota=50%
+TasksMax=64
+LimitNOFILE=512
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=100
+
+[Install]
+WantedBy=multi-user.target

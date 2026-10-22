@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { animate, motion, useMotionValue, useTransform } from "motion/react"
 import { CardBack, PlayingCard } from "./PlayingCard"
 
@@ -11,26 +11,24 @@ function PersonGlyph() {
   )
 }
 
-// Turn timer: shadow pie that sweeps a full circle (click avatar to preview).
-// ponytail: preview-only trigger; driven by WS turn state later
-const TURN_SECONDS = 10
-
-function Avatar() {
-  const progress = useMotionValue(0)
+function Avatar({ active, deadline, clockOffset, name }) {
+  const progress = useMotionValue(360)
   const pie = useTransform(
     progress,
     (deg) => `conic-gradient(transparent ${deg}deg, rgb(0 0 0 / 0.35) ${deg}deg)`,
   )
-  const start = () => {
-    progress.set(0)
-    animate(progress, 360, {
-      duration: TURN_SECONDS,
-      ease: "linear",
-      onComplete: () => progress.set(0), // restore unshadowed avatar
-    })
-  }
+  useEffect(() => {
+    if (!active || !deadline) {
+      progress.set(360)
+      return
+    }
+    const seconds = Math.max(0, Math.min(20, (deadline * 1000 - Date.now() - clockOffset) / 1000))
+    progress.set((1 - seconds / 20) * 360)
+    const animation = animate(progress, 360, { duration: seconds, ease: "linear" })
+    return () => animation.stop()
+  }, [active, deadline, clockOffset, progress])
   return (
-    <button type="button" onClick={start} aria-label="Start turn timer" className="relative cursor-pointer">
+    <div role="img" aria-label={active ? `${name}'s turn` : name} className="relative">
       <div className="relative grid size-[5.6em] shrink-0 place-items-center rounded-full bg-avatar ring-[0.14em] ring-ink/80 ring-offset-[0.28em] ring-offset-bg shadow-[0_0.2em_0.8em_rgb(0_0_0_/_0.4)]">
         <PersonGlyph />
       </div>
@@ -40,15 +38,15 @@ function Avatar() {
         className="pointer-events-none absolute inset-0 rounded-full"
         aria-hidden
       />
-    </button>
+    </div>
   )
 }
 
-function Label({ name, stack }) {
+function Label({ name, stack, dealer, connected }) {
   return (
     <div className="leading-tight whitespace-nowrap">
-      <div className="text-[0.95em] text-ink-dim">{name}</div>
-      <div className="font-mono text-[1.5em] font-light text-ink">{stack}</div>
+      <div className="text-[0.95em] text-ink-dim" title={dealer ? "Dealer" : undefined}>{name}<span className="sr-only">{dealer ? " · dealer" : ""}{!connected ? " · offline" : ""}</span></div>
+      <div className="font-mono text-[1.5em] font-light text-ink">${stack.toLocaleString()}</div>
     </div>
   )
 }
@@ -58,9 +56,6 @@ function Fan({ children }) {
   return <div className="flex [&>*:not(:first-child)]:-ml-[1.5em]">{children}</div>
 }
 
-// Click-to-flip hole card: back → face. Preview-only trigger; later driven by
-// game state (showdown reveal). Flips the whole seat's hand together.
-// ponytail: local state hack, remove when game state arrives
 function FlipCard({ card, tilt, revealed, onToggle, size = "lg" }) {
   const dims = { sm: "h-[4.9em] w-[3.2em]", lg: "h-[5.5em] w-[4em]" }[size]
   return (
@@ -74,6 +69,7 @@ function FlipCard({ card, tilt, revealed, onToggle, size = "lg" }) {
       <motion.div
         className="relative h-full w-full"
         style={{ transformStyle: "preserve-3d" }}
+        initial={{ rotateY: 0 }}
         animate={{ rotateY: revealed ? 180 : 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 22 }}
       >
@@ -88,13 +84,12 @@ function FlipCard({ card, tilt, revealed, onToggle, size = "lg" }) {
   )
 }
 
-// Status badge: "d" (active/dealer placeholder) or "x" (folded). Center is
-// anchored on the table border by the parent (GamePage positions it).
+// D means acted; X means folded. Positioned by GamePage.
 export function StatusBadge({ status }) {
   const shadow = "shadow-[0_0.15em_0.4em_rgb(0_0_0_/_0.5)]"
   if (status === "x") {
     return (
-      <div className={`grid size-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar ${shadow}`}>
+      <div aria-label="Folded" className={`grid size-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar ${shadow}`}>
         <svg viewBox="0 0 24 24" className="size-[45%]" stroke="var(--color-ink)" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
           <path d="M6 6 18 18M18 6 6 18" />
         </svg>
@@ -102,7 +97,7 @@ export function StatusBadge({ status }) {
     )
   }
   return (
-    <div className={`grid size-[2em] place-items-center rounded-full bg-[#cfc3b4] font-card text-[1.05em] font-medium text-[#1d2021] ${shadow}`}>
+    <div aria-label="Has acted" className={`grid size-[2em] place-items-center rounded-full bg-[#cfc3b4] font-card text-[1.05em] font-medium text-[#1d2021] ${shadow}`}>
       D
     </div>
   )
@@ -113,7 +108,7 @@ export function StatusBadge({ status }) {
 export function BetBadge({ amount }) {
   if (amount == null) return null
   return (
-    <div className="grid h-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar px-[0.55em] font-mono text-[1em] text-ink shadow-[0_0.15em_0.4em_rgb(0_0_0_/_0.5)]">
+    <div aria-label={`Street bet ${amount}`} className="grid h-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar px-[0.55em] font-mono text-[1em] text-ink shadow-[0_0.15em_0.4em_rgb(0_0_0_/_0.5)]">
       {amount}
     </div>
   )
@@ -123,12 +118,11 @@ export function BetBadge({ amount }) {
  * side: "left" | "right" | "top" | "hero" — composition per table position.
  * All sizes em-based; inherits --stage-scale from the stage element.
  */
-export function Seat({ side, name, stack, cards = [], state = "active" }) {
+export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer }) {
   const faded = state === "folded"
-  // ponytail: preview-only hand reveal, remove when game state arrives
-  const [revealed, setRevealed] = useState(false)
-  const avatar = <Avatar />
-  const label = <Label name={name} stack={stack} />
+  const [revealed, setRevealed] = useState(true)
+  const avatar = <Avatar active={active} deadline={deadline} clockOffset={clockOffset} name={name} />
+  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} />
 
   const cardEls = cards.length ? (
     <div className={`flex ${faded ? "opacity-60" : ""}`}>
