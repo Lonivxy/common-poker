@@ -37,6 +37,8 @@ For LAN testing, run Vite with `npm run dev -- --host 0.0.0.0`, set backend `HOS
 
 ## Deploy
 
+The production frontend defaults to `https://91.149.238.210` through `web/.env.production`. A Vercel `VITE_API_URL` environment variable overrides that value; if present, set it to the same HTTPS URL and redeploy. Local development keeps its local backend URL.
+
 Deploy `web/` to Vercel (build `npm run build`, output `dist`). `web/vercel.json` provides the game-route SPA fallback. Set `VITE_API_URL` to the **HTTPS origin of your backend** before building, e.g. `https://poker-api.example.com`. It defaults to `http://localhost:8000` for local development.
 
 Run the backend on a host supporting persistent WebSockets, using `python -m server` with environment variable `HOST=0.0.0.0` and optionally `PORT` (default 8000). The launcher configures bounded frame sizes and queues, disables WebSocket compression, and limits HTTP concurrency. Terminate TLS at the hosting proxy. Run **exactly one worker and one replica**: rooms, limits, and sockets are intentionally in memory. Do not deploy the backend as a Vercel function. `/health` returns process status and occupied room count.
