@@ -1,1 +1,39 @@
+@import url("https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Manufacturing+Consent&family=Federo&display=swap");
 @import "tailwindcss";
+
+@theme {
+  --color-bg: #121414;
+  --color-felt: #191d1d;
+  --color-ink: #cfc6bb;
+  --color-ink-dim: #99958f;
+  --color-ink-faint: #74706a;
+  --color-card-face: #d4c7b8;
+  --color-card-back: #1d2021;
+  --color-card-back-line: #a6a39d;
+  --color-suit-red: #a8453e;
+  --color-suit-dark: #131616;
+  --color-avatar: #292b2c;
+  --color-avatar-glyph: #66635f;
+  --color-accent: #c3a186;
+  --color-accent-ink: #292522;
+
+  --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Manufacturing Consent", ui-monospace, monospace;
+  --font-card: "Federo", ui-monospace, monospace;
+
+  /* single knob that scales the entire table composition (table + seats + cards) */
+  --stage-scale: clamp(0.55rem, 2.6vmin, 0.85rem);
+
+  /* space the stage reserves above the floating action bar */
+  --stage-bottom-pad: clamp(1.5rem, 5vmin, 5rem);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-bg font-sans text-ink overscroll-none antialiased;
+}
