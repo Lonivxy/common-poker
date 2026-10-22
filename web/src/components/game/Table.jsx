@@ -7,7 +7,6 @@ export function Table({ board, pot }) {
   return <>
     <div className="table-felt" aria-hidden />
     <div className="table-pot" aria-label={`Pot ${pot}`}>
-      <span className="table-pot-label">POT</span>
       <motion.span key={pot} initial={{ opacity: 0.5 }} animate={{ opacity: 1 }} transition={{ duration: 0.16 }}>{pot}</motion.span>
     </div>
     <div className="table-board" aria-label="Community cards">
