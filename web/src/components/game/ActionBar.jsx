@@ -2,7 +2,7 @@ import { useState } from "react"
 
 export function ActionBar({ legal, onAction, pot }) {
   const base =
-    "h-[clamp(2.5rem,7vmin,3.3rem)] rounded-full px-[clamp(1.3rem,3.5vmin,1.9rem)] text-[clamp(0.9rem,2.3vmin,1.05rem)] font-medium transition-colors disabled:opacity-40"
+    "h-[clamp(2.75rem,7vmin,3.3rem)] rounded-full px-[clamp(1.3rem,3.5vmin,1.9rem)] text-[clamp(0.9rem,2.3vmin,1.05rem)] font-medium transition-colors disabled:opacity-40"
   const [raiseOpen, setRaiseOpen] = useState(false)
   const [raiseTo, setRaiseTo] = useState(legal.minRaise)
   const presets = [
@@ -18,7 +18,7 @@ export function ActionBar({ legal, onAction, pot }) {
             <button
               type="button"
               onClick={() => setRaiseTo(legal.maxRaise)}
-              className={`rounded-full border-[1.3px] px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`min-h-11 rounded-full border-[1.3px] px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
                 raiseTo === legal.maxRaise ? "border-suit-dark bg-suit-dark text-card-face" : "border-suit-dark/50 text-suit-dark hover:bg-suit-dark/10"
               }`}
             >
@@ -29,7 +29,7 @@ export function ActionBar({ legal, onAction, pot }) {
                 type="button"
                 key={p.label}
                 onClick={() => setRaiseTo(p.value)}
-                className={`rounded-full border-[1.3px] px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
+                className={`min-h-11 rounded-full border-[1.3px] px-4 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
                   raiseTo === p.value ? "border-suit-dark bg-suit-dark text-card-face" : "border-suit-dark/50 text-suit-dark hover:bg-suit-dark/10"
                 }`}
               >
@@ -39,7 +39,7 @@ export function ActionBar({ legal, onAction, pot }) {
             <button
               type="button"
               onClick={() => setRaiseTo((v) => Math.min(v + 20, legal.maxRaise))}
-              className="rounded-full border-[1.3px] border-suit-dark/50 px-4 py-1.5 text-sm font-medium text-suit-dark transition-colors hover:bg-suit-dark/10"
+              className="min-h-11 rounded-full border-[1.3px] border-suit-dark/50 px-4 py-1.5 text-sm font-medium text-suit-dark transition-colors hover:bg-suit-dark/10"
             >
               +20
             </button>
@@ -53,7 +53,7 @@ export function ActionBar({ legal, onAction, pot }) {
               step={1}
               value={raiseTo}
               onChange={(e) => setRaiseTo(Number(e.target.value))}
-              className="w-1.5 min-h-24 flex-1 accent-[#292522] [direction:rtl] [writing-mode:vertical-lr]"
+              className="w-11 min-h-24 flex-1 accent-[#292522] [direction:rtl] [writing-mode:vertical-lr]"
               aria-label="Raise to total for this street"
             />
           </div>

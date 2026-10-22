@@ -12,9 +12,9 @@ const POSITIONS = {
   hero: 'bottom-[1%] left-1/2 -translate-x-1/2',
 }
 const BADGES = {
-  left: 'left-[14%] top-[57%] portrait:left-[10%] portrait:top-[32%]',
+  left: 'left-[14%] top-[57%] portrait:left-[10%] portrait:top-[42%]',
   top: 'left-[36%] top-[20%] portrait:top-[18%]',
-  right: 'left-[84%] top-[25%] portrait:left-[90%] portrait:top-[32%]',
+  right: 'left-[84%] top-[25%] portrait:left-[90%] portrait:top-[42%]',
   hero: 'left-[45%] top-[72%]',
 }
 
@@ -100,10 +100,10 @@ export function GamePage() {
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
-      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 pt-3 sm:px-6">
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:px-6">
         <span className="font-mono text-sm text-ink-dim">{game?.room || (creating ? '' : roomId)}</span>
         <details className="relative">
-          <summary aria-label="Menu" className="flex cursor-pointer list-none flex-col gap-[7px] py-2 [&::-webkit-details-marker]:hidden">
+          <summary aria-label="Menu" className="grid min-h-11 min-w-11 cursor-pointer list-none place-content-center gap-[7px] [&::-webkit-details-marker]:hidden">
             <span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" />
           </summary>
           <div className="absolute right-0 top-10 w-44 rounded-2xl border border-ink/70 bg-card-face p-2">
@@ -113,7 +113,7 @@ export function GamePage() {
       </header>
       <p className="sr-only" role="status">{game?.street}{game?.turn != null && ` · ${game.players[game.turn].name}'s turn`}</p>
       <main className="grid min-h-0 flex-1 place-items-center overflow-x-clip px-2 py-1 pb-[var(--stage-bottom-pad)]">
-        <div style={{ fontSize: 'var(--stage-scale)' }} className="relative aspect-[13/5] max-h-full w-[min(90vw,1200px)] portrait:aspect-[3/4] portrait:h-full portrait:w-auto">
+        <div style={{ fontSize: 'var(--stage-scale)' }} className="relative aspect-[13/5] max-h-full w-[min(90vw,1200px)] portrait:aspect-[4/3] portrait:h-auto portrait:w-[90vw]">
           <Table board={game?.board || []} pot={`$${(game?.pot ?? 0).toLocaleString()}`} />
           {seats.map(p => <div key={p.id} className={`absolute ${POSITIONS[p.side]}`}>
             <Seat {...p} stack={p.stack} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer} />
@@ -124,7 +124,7 @@ export function GamePage() {
           </div>)}
         </div>
       </main>
-      <footer className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3 sm:px-6">
+      <footer className="absolute inset-x-0 bottom-0 z-20 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:px-6">
         {error ? <p role="alert" className="mb-3 text-center text-sm text-red-300">{error}</p>
           : !connected && <p role="status" className="mb-3 text-center text-sm text-ink-dim">{status}</p>}
         {!error && connected && game.street === 'showdown' && <p role="status" className="absolute bottom-3 left-4 right-40 break-words text-left text-sm text-ink sm:left-6">{game.message}</p>}
