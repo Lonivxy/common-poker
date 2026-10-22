@@ -17,6 +17,7 @@ export function GamePage() {
   const [clock, setClock] = useState(() => ({ now: Date.now(), offset: 0 }))
   const creating = roomId === 'new'
   const requestedRoom = creating ? state?.room || undefined : roomId
+  const requestedPrivate = creating ? state?.private !== false : undefined
   const name = params.get('name') || sessionStorage.getItem('pokerName') || 'Player'
 
   useEffect(() => {
@@ -26,7 +27,7 @@ export function GamePage() {
     const reject = (message) => {
       active = false
       ws?.close()
-      navigate('/', { replace: true, state: { error: message, room: requestedRoom || '' } })
+      navigate('/', { replace: true, state: { error: message, room: requestedRoom || '', private: requestedPrivate } })
     }
     // Defer opening so React StrictMode's setup/cleanup probe creates no ghost seat.
     const open = setTimeout(() => {
@@ -36,7 +37,10 @@ export function GamePage() {
       ws = new WebSocket(url)
       socket.current = ws
       let alive = Date.now()
-      ws.onopen = () => ws.send(JSON.stringify({ type: creating ? 'create' : 'join', room: requestedRoom, name }))
+      ws.onopen = () => ws.send(JSON.stringify({
+        type: creating ? 'create' : 'join', room: requestedRoom, name,
+        private: requestedPrivate,
+      }))
       ws.onmessage = (event) => {
         if (!active) return
         alive = Date.now()
@@ -72,7 +76,7 @@ export function GamePage() {
       }, 1000)
     }, 0)
     return () => { active = false; clearTimeout(open); if (ws) { clearInterval(ws.watchdog); ws.close() } }
-  }, [requestedRoom, creating, name, navigate])
+  }, [requestedRoom, requestedPrivate, creating, name, navigate])
 
   const send = (data) => {
     if (socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify(data))
@@ -88,7 +92,10 @@ export function GamePage() {
   return (
     <div className="game-page">
       <header className="game-header">
-        <span className="font-mono text-sm text-ink-dim">{game?.room || (creating ? '' : roomId)}</span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-sm text-ink-dim">{game?.room || (creating ? '' : roomId)}</span>
+          <span className="rounded-full border border-ink/25 px-2 py-1 text-[10px] uppercase tracking-wider text-ink-dim">{game.private ? 'Private' : 'Public'}</span>
+        </div>
         <details className="relative">
           <summary aria-label="Menu" className="grid min-h-11 min-w-11 cursor-pointer list-none place-content-center gap-[7px] [&::-webkit-details-marker]:hidden">
             <span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" />

@@ -38,7 +38,7 @@ class WebSocketTestCase(unittest.TestCase):
 class ServerTests(WebSocketTestCase):
     def test_lobby_tracks_room_availability_and_host_transfer(self):
         with contextlib.ExitStack() as stack:
-            a, hosted = self.connect(stack, type="create", room="42", name="Host")
+            a, hosted = self.connect(stack, type="create", room="42", name="Host", private=False)
             response = self.client.get("/rooms", headers=ORIGIN)
             self.assertEqual(response.headers["cache-control"], "no-store")
             self.assertEqual(response.json(), {"rooms": [
@@ -62,11 +62,28 @@ class ServerTests(WebSocketTestCase):
         for code, count in [("1", 4), ("2", 0), ("3", 1), ("4", 2), ("5", 4)]:
             game = main.rooms[code] = Game(code)
             game.players = [Player(str(i), "Player") for i in range(count)]
+        main.rooms["5"].private = False
         main.rooms["3"].updated -= 3601
         main.rooms["4"].street = "preflop"
         main.rooms["5"].players[0].connected = False
         self.assertEqual(self.client.get("/rooms").json(), {"rooms": [
             {"room": "5", "host": "Player", "players": 3, "capacity": 4}]})
+
+    def test_private_rooms_are_hidden_but_joinable_by_room_number(self):
+        with contextlib.ExitStack() as stack:
+            host, hosted = self.connect(stack, type="create", room="314159")
+            self.assertTrue(hosted["private"])
+            self.assertEqual(self.client.get("/rooms").json(), {"rooms": []})
+            guest, joined = self.connect(stack, type="join", room="314159")
+            self.assertTrue(joined["private"])
+            self.assertEqual(len(joined["players"]), 2)
+            state(host)
+
+    def test_create_rejects_non_boolean_private_option(self):
+        with contextlib.ExitStack() as stack:
+            _, rejected = self.connect(stack, type="create", room="51", private=1)
+            self.assertEqual(rejected["message"], "Private must be true or false")
+            self.assertNotIn("51", main.rooms)
 
     def test_origin_and_cors(self):
         with self.assertRaises(WebSocketDisconnect):

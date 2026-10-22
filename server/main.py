@@ -142,7 +142,7 @@ async def lobby(response: Response):
         available = []
         for game in rooms.values():
             players = [p for p in game.players if p.connected]
-            if (game.street in ("waiting", "showdown") and 0 < len(players) < 4
+            if (not game.private and game.street in ("waiting", "showdown") and 0 < len(players) < 4
                     and now - game.updated <= 3600):
                 available.append({"room": game.code, "host": players[0].name,
                                   "players": len(players), "capacity": 4})
@@ -176,6 +176,9 @@ async def gameplay(ws: WebSocket):
         if hello.get("type") == "join" or "room" in hello:
             if not isinstance(code, str) or not re.fullmatch(r"[0-9]{1,6}", code):
                 raise ValueError("Room number must be 1–6 digits")
+        private = hello.get("private", True)
+        if hello.get("type") == "create" and not isinstance(private, bool):
+            raise ValueError("Private must be true or false")
         async with gate:
             if hello.get("type") == "create":
                 if len(rooms) >= 10: raise ValueError("All 10 tables are occupied. Try later.")
@@ -186,7 +189,7 @@ async def gameplay(ws: WebSocket):
                     while code in rooms: code = str(secrets.randbelow(900000) + 100000)
                 elif code in rooms:
                     raise ValueError("Room number is already in use")
-                game = Game(code, owner_ip=ip)
+                game = Game(code, owner_ip=ip, private=private)
                 rooms[code] = game
             elif hello.get("type") == "join":
                 game = rooms.get(code)

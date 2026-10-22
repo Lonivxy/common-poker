@@ -10,7 +10,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "server.main:app", host=os.getenv("HOST", "127.0.0.1"),
         port=int(os.getenv("PORT", "8000")), workers=1,
-        ws="auto", ws_max_size=1024, ws_max_queue=4,
+        ws="websockets", ws_max_size=1024, ws_max_queue=4,
         ws_ping_interval=10, ws_ping_timeout=20, ws_per_message_deflate=False,
         limit_concurrency=64, backlog=64, timeout_keep_alive=5,
         timeout_graceful_shutdown=5, h11_max_incomplete_event_size=8192,

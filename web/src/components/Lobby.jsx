@@ -8,7 +8,6 @@ export function Lobby({ onJoin, hasName }) {
 
   useEffect(() => {
     let active = true
-    let nextPoll
     let request
     let timeout
     const load = async () => {
@@ -36,14 +35,12 @@ export function Lobby({ onJoin, hasName }) {
         clearTimeout(timeout)
         if (active) {
           setLoading(false)
-          nextPoll = setTimeout(load, 5000)
         }
       }
     }
     load()
     return () => {
       active = false
-      clearTimeout(nextPoll)
       clearTimeout(timeout)
       request?.abort()
     }
@@ -58,8 +55,8 @@ export function Lobby({ onJoin, hasName }) {
     </div>
     <p role="status" className="mb-2 text-xs leading-relaxed text-ink-dim">
       {tables === null ? 'Finding open tables…' : error || (tables.length === 0
-        ? 'No open tables yet. Host one to get started.'
-        : hasName ? 'Choose a table. The list updates automatically.' : 'Enter your name above, then choose a table.')}
+        ? 'No public tables yet. Turn off Private when hosting to list one here.'
+        : hasName ? 'Choose a public table. Refresh to check for new tables.' : 'Enter your name above, then choose a public table.')}
     </p>
     {tables?.length > 0 && <ul aria-label="Joinable tables" className="max-h-64 divide-y divide-ink/15 overflow-y-auto">
       {tables.map(table => <li key={table.room} className="flex items-center gap-3 py-3">
