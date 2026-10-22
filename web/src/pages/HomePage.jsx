@@ -27,9 +27,8 @@ export function HomePage() {
         <div className="flex gap-3">
           <button
             type="button"
-            disabled={!target}
-            onClick={() => navigate(`/game/${room.trim()}?host=1`)}
-            className="h-12 flex-1 rounded-full border-[1.3px] border-ink/70 font-medium text-ink transition-colors hover:bg-ink/10 disabled:pointer-events-none disabled:opacity-40"
+            onClick={() => navigate(`/game/${Math.floor(1000 + Math.random() * 9000)}?host=1`)}
+            className="h-12 flex-1 rounded-full border-[1.3px] border-ink/70 font-medium text-ink transition-colors hover:bg-ink/10"
           >
             Host
           </button>
