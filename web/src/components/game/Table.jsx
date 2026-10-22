@@ -1,3 +1,5 @@
+import { useState } from "react"
+import { motion } from "motion/react"
 import { PlayingCard } from "./PlayingCard"
 
 /**
@@ -5,7 +7,9 @@ import { PlayingCard } from "./PlayingCard"
  * (--stage-scale) drives all em-based sizing; felt is inset so seats can sit
  * around it on the stage.
  */
-export function Table({ board, pot }) {
+export function Table({ board, pot, next }) {
+  // ponytail: preview-only deal trigger, remove when game state arrives
+  const [riverDealt, setRiverDealt] = useState(false)
   return (
     <>
       {/* felt */}
@@ -22,9 +26,25 @@ export function Table({ board, pot }) {
           {board.map((c, i) =>
             c ? (
               <PlayingCard key={i} size="md" {...c} />
+            ) : riverDealt && next ? (
+              // dealt-in animation: card slides from the deck and settles with a small bounce
+              <motion.div
+                key={i}
+                initial={{ y: "-5.5em" }}
+                animate={{ opacity: [0, 1, 1], y: ["-5.5em", "0.25em", "0em"] }}
+                transition={{ duration: 0.42, times: [0, 0.72, 1], ease: "easeOut" }}
+              >
+                <PlayingCard size="md" {...next} />
+              </motion.div>
             ) : (
-              // undealt slot
-              <div key={i} className="h-[8em] w-[5.4em] shrink-0 rounded-[0.3em] border border-dashed border-ink/15" />
+              // undealt slot — click deals the river (preview only)
+              <button
+                key={i}
+                type="button"
+                onClick={() => setRiverDealt(true)}
+                aria-label="Deal river card"
+                className="h-[8em] w-[5.4em] shrink-0 cursor-pointer rounded-[0.3em] border border-dashed border-ink/15 transition-colors hover:border-ink/35"
+              />
             ),
           )}
         </div>

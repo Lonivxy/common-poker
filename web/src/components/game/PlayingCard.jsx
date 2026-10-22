@@ -18,11 +18,11 @@ function Pip({ suit, className }) {
 }
 
 /**
- * size: "lg" (hole cards) | "md" (community)
+ * size: "lg" (hero hole cards) | "sm" (opponent hole cards) | "md" (community)
  * All dimensions em-based; scale comes from --stage-scale.
  */
 export function PlayingCard({ rank, suit, size = "md", tilt = 0 }) {
-  const dims = { md: "w-[5.4em] h-[8em]", lg: "w-[4em] h-[5.5em]" }[size]
+  const dims = { sm: "h-[4.9em] w-[3.2em]", md: "w-[5.4em] h-[8em]", lg: "w-[4em] h-[5.5em]" }[size]
   const red = SUITS[suit].red
   return (
     <div
@@ -39,11 +39,12 @@ export function PlayingCard({ rank, suit, size = "md", tilt = 0 }) {
   )
 }
 
-export function CardBack({ tilt = 0, folded = false }) {
+export function CardBack({ tilt = 0, folded = false, size = "sm" }) {
+  const dims = { sm: "h-[4.9em] w-[3.2em]", lg: "h-[5.5em] w-[4em]" }[size]
   return (
     <div
       style={{ rotate: `${tilt}deg` }}
-      className={`relative h-[4.9em] w-[3.2em] shrink-0 rounded-[0.25em] border-[0.09em] shadow-[0_0.15em_0.5em_rgb(0_0_0_/_0.45)] ${
+      className={`relative ${dims} shrink-0 rounded-[0.25em] border-[0.09em] shadow-[0_0.15em_0.5em_rgb(0_0_0_/_0.45)] ${
         folded ? "border-card-back-line/70 bg-transparent" : "border-card-back-line/90 bg-card-back"
       }`}
     >

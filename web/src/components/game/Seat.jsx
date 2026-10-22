@@ -1,3 +1,5 @@
+import { useState } from "react"
+import { animate, motion, useMotionValue, useTransform } from "motion/react"
 import { CardBack, PlayingCard } from "./PlayingCard"
 
 function PersonGlyph() {
@@ -9,11 +11,36 @@ function PersonGlyph() {
   )
 }
 
+// Turn timer: shadow pie that sweeps a full circle (click avatar to preview).
+// ponytail: preview-only trigger; driven by WS turn state later
+const TURN_SECONDS = 10
+
 function Avatar() {
+  const progress = useMotionValue(0)
+  const pie = useTransform(
+    progress,
+    (deg) => `conic-gradient(transparent ${deg}deg, rgb(0 0 0 / 0.35) ${deg}deg)`,
+  )
+  const start = () => {
+    progress.set(0)
+    animate(progress, 360, {
+      duration: TURN_SECONDS,
+      ease: "linear",
+      onComplete: () => progress.set(0), // restore unshadowed avatar
+    })
+  }
   return (
-    <div className="grid size-[5.6em] shrink-0 place-items-center rounded-full bg-avatar ring-[0.14em] ring-ink/80 ring-offset-[0.28em] ring-offset-bg shadow-[0_0.2em_0.8em_rgb(0_0_0_/_0.4)]">
-      <PersonGlyph />
-    </div>
+    <button type="button" onClick={start} aria-label="Start turn timer" className="relative cursor-pointer">
+      <div className="relative grid size-[5.6em] shrink-0 place-items-center rounded-full bg-avatar ring-[0.14em] ring-ink/80 ring-offset-[0.28em] ring-offset-bg shadow-[0_0.2em_0.8em_rgb(0_0_0_/_0.4)]">
+        <PersonGlyph />
+      </div>
+      {/* timer pie shadows the avatar face as a growing sector */}
+      <motion.div
+        style={{ background: pie }}
+        className="pointer-events-none absolute inset-0 rounded-full"
+        aria-hidden
+      />
+    </button>
   )
 }
 
@@ -29,6 +56,36 @@ function Label({ name, stack }) {
 // Fanned pair: second card overlaps the first, both slightly tilted.
 function Fan({ children }) {
   return <div className="flex [&>*:not(:first-child)]:-ml-[1.5em]">{children}</div>
+}
+
+// Click-to-flip hole card: back → face. Preview-only trigger; later driven by
+// game state (showdown reveal). Flips the whole seat's hand together.
+// ponytail: local state hack, remove when game state arrives
+function FlipCard({ card, tilt, revealed, onToggle, size = "lg" }) {
+  const dims = { sm: "h-[4.9em] w-[3.2em]", lg: "h-[5.5em] w-[4em]" }[size]
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={revealed ? "Hide hand" : "Reveal hand"}
+      className={`${dims} shrink-0 cursor-pointer`}
+      style={{ perspective: "40em", rotate: `${tilt}deg` }}
+    >
+      <motion.div
+        className="relative h-full w-full"
+        style={{ transformStyle: "preserve-3d" }}
+        animate={{ rotateY: revealed ? 180 : 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 22 }}
+      >
+        <div className="absolute inset-0 [backface-visibility:hidden]">
+          <CardBack size={size} />
+        </div>
+        <div className="absolute inset-0 [backface-visibility:hidden] [transform:rotateY(180deg)]">
+          <PlayingCard size={size} {...card} />
+        </div>
+      </motion.div>
+    </button>
+  )
 }
 
 // Status badge: "d" (active/dealer placeholder) or "x" (folded). Center is
@@ -51,25 +108,47 @@ export function StatusBadge({ status }) {
   )
 }
 
+// Bet badge: current call/raise amount sitting beside the status badge.
+// Hidden when the player hasn't bet this street.
+export function BetBadge({ amount }) {
+  if (amount == null) return null
+  return (
+    <div className="grid h-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar px-[0.55em] font-mono text-[1em] text-ink shadow-[0_0.15em_0.4em_rgb(0_0_0_/_0.5)]">
+      {amount}
+    </div>
+  )
+}
+
 /**
  * side: "left" | "right" | "top" | "hero" — composition per table position.
  * All sizes em-based; inherits --stage-scale from the stage element.
  */
 export function Seat({ side, name, stack, cards = [], state = "active" }) {
   const faded = state === "folded"
+  // ponytail: preview-only hand reveal, remove when game state arrives
+  const [revealed, setRevealed] = useState(false)
   const avatar = <Avatar />
   const label = <Label name={name} stack={stack} />
 
   const cardEls = cards.length ? (
     <div className={`flex ${faded ? "opacity-60" : ""}`}>
       <Fan>
-        {cards.map((c, i) =>
-          c.rank ? (
-            <PlayingCard key={i} size="lg" tilt={i === 0 ? -9 : 6} {...c} />
+        {cards.map((c, i) => {
+          const size = side === "hero" ? "lg" : "sm"
+          const tilt = i === 0 ? -9 : 6
+          return c.rank ? (
+            <FlipCard
+              key={i}
+              card={c}
+              tilt={tilt}
+              size={size}
+              revealed={revealed}
+              onToggle={() => setRevealed((r) => !r)}
+            />
           ) : (
-            <CardBack key={i} tilt={i === 0 ? -9 : 6} folded={faded} />
-          ),
-        )}
+            <CardBack key={i} tilt={tilt} size={size} folded={faded} />
+          )
+        })}
       </Fan>
     </div>
   ) : null
