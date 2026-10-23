@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
 import { animate, motion, useMotionValue } from "motion/react"
 import { useReducedMotion } from "../../hooks/useReducedMotion"
+import { CrownIcon } from "../CrownIcon"
 import { CardBack, PlayingCard } from "./PlayingCard"
 import { getPokerHandName } from "../../pokerHand"
 
@@ -46,10 +47,7 @@ function Label({ name, stack, dealer, connected, badges, handName, isHost }) {
   return (
     <div className="seat-label">
       <div className="seat-name flex items-center justify-center gap-1" title={name}>
-        {isHost && <svg viewBox="0 0 20 20" className="size-[1em] shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="m2.5 6.5 4.5 3 3-6 3 6 4.5-3L16 15.5H4L2.5 6.5Z" />
-          <path d="M5 17.5h10" />
-        </svg>}
+        {isHost && <CrownIcon className="size-[1em] shrink-0 text-accent" />}
         <span className="min-w-0 truncate">{name}</span>
         <span className="sr-only">{isHost ? " · host" : ""}{dealer ? " · dealer" : ""}{!connected ? " · offline" : ""}</span>
       </div>

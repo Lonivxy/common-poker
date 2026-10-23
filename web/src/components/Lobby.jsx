@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useReducedMotion } from '../hooks/useReducedMotion'
+import { CrownIcon } from './CrownIcon'
 import { PokerDivider } from './PokerDivider'
 
 export function Lobby({ onJoin }) {
@@ -74,7 +75,9 @@ export function Lobby({ onJoin }) {
         <span className="size-2.5 shrink-0 rounded-full bg-accent/70" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium tabular-nums text-ink">Table {table.room}</p>
-          <p className="truncate text-xs text-ink-dim" title={table.host}>Hosted by {table.host}</p>
+          <p className="truncate text-xs text-ink-dim" title={table.host}>
+            Hosted by <span className="inline-flex items-center gap-1"><CrownIcon className="size-3 shrink-0 text-accent" />{table.host}</span>
+          </p>
         </div>
         <span className="text-xs tabular-nums text-ink-dim" aria-label={`${table.players} of ${table.capacity} seats occupied`}>{table.players} / {table.capacity}</span>
         <button type="button" onClick={() => onJoin(table.room)} aria-label={`Join table ${table.room}`} className="rounded-full border border-ink/40 px-3.5 py-1.5 text-xs text-ink transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-accent">Join</button>
