@@ -91,8 +91,10 @@ export function GamePage() {
       ws.onclose = () => {
         if (!active) return
         if (!joined) reject('Cannot join the room.')
-        else setStatus('Disconnected — return home to join again')
-        setSettingsFeedback({ pending: false, error: 'Connection lost. Rejoin to change settings.' })
+        else {
+          setStatus('Disconnected — return home to join again')
+          setSettingsFeedback({ pending: false, error: 'Connection lost. Rejoin to change settings.' })
+        }
       }
       ws.watchdog = setInterval(() => {
         if (Date.now() - alive > 35000) ws.close()
@@ -107,7 +109,7 @@ export function GamePage() {
     return true
   }
   const connected = status === 'Connected'
-  const hero = game?.players.findIndex(p => p.id === game.you) ?? 0
+  const hero = Math.max(0, game?.players.findIndex(p => p.id === game.you) ?? 0)
   const seats = game?.players.map((p, i) => ({ ...p, index: i, side: ['hero', 'left', 'top', 'right'][(i - hero + 4) % 4] })).filter(p => p.connected) || []
   const canStart = connected && game?.host === game?.you && ['waiting', 'showdown'].includes(game?.street)
   const ready = game?.players.filter(p => p.connected && p.stack > 0).length >= 2

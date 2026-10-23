@@ -14,6 +14,8 @@ from .engine import Game, Player
 from .passwords import check_password, hash_password, validate_password
 
 ORIGINS = {"https://commonpoker.vercel.app", "http://localhost:5173", "http://127.0.0.1:5173",
+           "http://localhost:5174", "http://127.0.0.1:5174",
+           "http://localhost:5175", "http://127.0.0.1:5175",
            "http://localhost:4173", "http://127.0.0.1:4173"}
 if os.getenv("LOCAL_ORIGIN"):
     ORIGINS.add(os.environ["LOCAL_ORIGIN"])
@@ -117,8 +119,9 @@ async def ticker():
         async with gate:
             for code, game in list(rooms.items()):
                 if game.deadline and time.time() >= game.deadline:
-                    game.action(game.turn, "fold")
-                    broadcast(game)
+                    if game.turn is not None and 0 <= game.turn < len(game.players):
+                        game.action(game.turn, "fold")
+                        broadcast(game)
                 if not any(p.connected for p in game.players) or time.monotonic() - game.updated > 3600:
                     for p in game.players:
                         peer = connections.get(p.id)

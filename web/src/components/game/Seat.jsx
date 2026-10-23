@@ -121,8 +121,15 @@ export function BetBadge({ amount }) {
  */
 export function Seat({ side, name, stack, cards = [], board = [], state = "active", active, deadline, clockOffset, connected, dealer, badges }) {
   const faded = state === "folded"
+  const cardKey = String(cards?.[0]?.rank || '') + String(cards?.[0]?.suit || '') + String(cards?.[1]?.rank || '') + String(cards?.[1]?.suit || '')
+  const [lastCardKey, setLastCardKey] = useState(cardKey)
   const [revealed, setRevealed] = useState(true)
   const reduce = useReducedMotion()
+
+  if (cardKey !== lastCardKey) {
+    setLastCardKey(cardKey)
+    setRevealed(true)
+  }
   const handName = !faded && cards?.length === 2 && cards.every(card => card?.rank) && (board?.length ?? 0) >= 3
     ? getPokerHandName([...cards, ...board])
     : null
