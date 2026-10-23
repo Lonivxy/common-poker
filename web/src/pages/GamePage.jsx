@@ -162,10 +162,10 @@ export function GamePage() {
         <AnimatePresence>
           {notice && <motion.p key={notice} role="status" className="room-notice" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduce ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.15 }}>{notice}</motion.p>}
         </AnimatePresence>
-        {error ? <p role="alert" className="mb-3 text-center text-sm text-red-300">{error}</p>
-          : !connected && <p role="status" className="mb-3 text-center text-sm text-ink-dim">{status}</p>}
+        {error ? <p role="alert" className="game-status text-red-300">{error}</p>
+          : !connected && <p role="status" className="game-status text-ink-dim">{status}</p>}
         {!error && connected && game.street === 'showdown' && <p role="status" className="game-result">{game.message}</p>}
-        {canStart ? <div className="flex justify-center"><button disabled={!ready} title={!ready ? 'Waiting for another player with chips' : undefined} onClick={() => send({ type: 'start' })} className="action-button action-primary min-w-36">{game.street === 'waiting' ? 'Deal' : 'Next hand'}</button></div>
+        {canStart ? <div className="game-start-row"><button disabled={!ready} title={!ready ? 'Waiting for another player with chips' : undefined} onClick={() => send({ type: 'start' })} className="action-button action-primary game-start-button">{game.street === 'waiting' ? 'Deal' : 'Next hand'}</button></div>
           : game?.legal && connected ? <ActionBar key={`${game.street}-${game.deadline}`} legal={game.legal} pot={game.pot} onAction={(action, amount) => send({ type: 'action', action, amount, turn: game.deadline })} />
             : null}
       </footer>
