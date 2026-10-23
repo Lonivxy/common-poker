@@ -34,6 +34,39 @@ body,
   height: 100%;
 }
 
+@media (orientation: portrait) and (max-width: 40rem) {
+  :root {
+    --stage-scale: clamp(0.48rem, 2.4vmin, 0.85rem);
+  }
+}
+
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  overscroll-behavior: none;
+}
+
 body {
   @apply bg-bg font-sans text-ink overscroll-none antialiased;
+}
+
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+button:active,
+a:active,
+[role="button"]:active {
+  transform: scale(0.98);
 }

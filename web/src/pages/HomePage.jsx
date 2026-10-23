@@ -23,6 +23,6 @@ export function HomePage({ pending = false }) {
       </div>
       {state?.error && <p role="alert" className="text-center text-sm text-red-300">{state.error}</p>}
     </fieldset>
-    <a href="https://github.com/Moreallure/common-poker" target="_blank" rel="noreferrer" aria-label="GitHub" className="fixed right-5 bottom-5 size-6 opacity-60"><img src={githubIcon} alt="" className="size-full invert" /></a>
+    <a href="https://github.com/Moreallure/common-poker" target="_blank" rel="noreferrer" aria-label="GitHub" className="fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+1.25rem)] size-6 opacity-60 transition-opacity hover:opacity-100"><img src={githubIcon} alt="" className="size-full invert" /></a>
   </main>
 }
