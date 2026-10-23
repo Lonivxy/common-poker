@@ -6,16 +6,16 @@ import { ActionBar } from '../components/game/ActionBar'
 import { HomePage } from './HomePage'
 
 const POSITIONS = {
-  left: 'left-0 top-[48%] -translate-y-1/2 portrait:left-[2%] portrait:top-[9%] portrait:translate-y-0',
+  left: 'left-0 top-[48%] -translate-y-1/2 portrait:left-[2%] portrait:top-[14%] portrait:max-sm:top-[16%] portrait:translate-y-0',
   top: 'left-1/2 top-[-6%] -translate-x-1/2 portrait:top-[1%]',
-  right: 'right-0 top-[48%] -translate-y-1/2 portrait:right-[2%] portrait:top-[9%] portrait:translate-y-0',
-  hero: 'bottom-[1%] left-1/2 -translate-x-1/2',
+  right: 'right-0 top-[48%] -translate-y-1/2 portrait:right-[2%] portrait:top-[14%] portrait:max-sm:top-[16%] portrait:translate-y-0',
+  hero: 'bottom-[1%] left-1/2 -translate-x-1/2 portrait:bottom-[7%]',
 }
 const BADGES = {
-  left: 'left-[14%] top-[57%] portrait:left-[10%] portrait:top-[42%]',
-  top: 'left-[36%] top-[20%] portrait:top-[18%]',
-  right: 'left-[84%] top-[25%] portrait:left-[90%] portrait:top-[42%]',
-  hero: 'left-[45%] top-[72%]',
+  left: 'left-[14%] top-[57%] portrait:left-[10%] portrait:top-[48%] portrait:max-sm:top-[50%]',
+  top: 'left-[36%] top-[20%] portrait:top-[19%]',
+  right: 'left-[84%] top-[25%] portrait:left-[90%] portrait:top-[48%] portrait:max-sm:top-[50%]',
+  hero: 'left-[45%] top-[72%] portrait:top-[calc(93%-4em)]',
 }
 
 export function GamePage() {
@@ -112,8 +112,8 @@ export function GamePage() {
         </details>
       </header>
       <p className="sr-only" role="status">{game?.street}{game?.turn != null && ` · ${game.players[game.turn].name}'s turn`}</p>
-      <main className="grid min-h-0 flex-1 place-items-center overflow-x-clip px-2 py-1 pb-[var(--stage-bottom-pad)]">
-        <div style={{ fontSize: 'var(--stage-scale)' }} className="relative aspect-[13/5] max-h-full w-[min(90vw,1200px)] portrait:aspect-[4/3] portrait:h-auto portrait:w-[90vw]">
+      <main className="grid min-h-0 flex-1 place-items-center overflow-x-clip px-2 py-1 pb-[var(--stage-bottom-pad)] portrait:pt-[calc(env(safe-area-inset-top)+3.75rem)]">
+        <div style={{ fontSize: 'var(--stage-scale)' }} className="relative aspect-[13/5] max-h-full w-[min(90vw,1200px)] portrait:aspect-auto portrait:h-full portrait:w-[90vw]">
           <Table board={game?.board || []} pot={`$${(game?.pot ?? 0).toLocaleString()}`} />
           {seats.map(p => <div key={p.id} className={`absolute ${POSITIONS[p.side]}`}>
             <Seat {...p} stack={p.stack} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer} />
@@ -124,7 +124,7 @@ export function GamePage() {
           </div>)}
         </div>
       </main>
-      <footer className="absolute inset-x-0 bottom-0 z-20 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] sm:px-6">
+      <footer className="absolute inset-x-0 bottom-0 z-20 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] portrait:relative portrait:inset-auto portrait:shrink-0 sm:px-6">
         {error ? <p role="alert" className="mb-3 text-center text-sm text-red-300">{error}</p>
           : !connected && <p role="status" className="mb-3 text-center text-sm text-ink-dim">{status}</p>}
         {!error && connected && game.street === 'showdown' && <p role="status" className="absolute bottom-3 left-4 right-40 break-words text-left text-sm text-ink sm:left-6">{game.message}</p>}

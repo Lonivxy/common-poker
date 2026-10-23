@@ -2,7 +2,7 @@ import { useState } from "react"
 
 export function ActionBar({ legal, onAction, pot }) {
   const base =
-    "min-h-11 h-[clamp(2.75rem,7vmin,3.3rem)] rounded-full px-[clamp(1.3rem,3.5vmin,1.9rem)] text-[clamp(0.9rem,2.3vmin,1.05rem)] font-medium transition-colors disabled:opacity-40"
+    "min-h-11 h-[clamp(2.75rem,7vmin,3.3rem)] rounded-full px-[clamp(1.3rem,3.5vmin,1.9rem)] portrait:px-2 text-[clamp(0.9rem,2.3vmin,1.05rem)] font-medium transition-colors disabled:opacity-40"
   const [raiseOpen, setRaiseOpen] = useState(false)
   const [raiseTo, setRaiseTo] = useState(legal.minRaise)
   const presets = [
@@ -14,7 +14,7 @@ export function ActionBar({ legal, onAction, pot }) {
     <div className="flex flex-col items-end gap-2 portrait:items-stretch">
       {raiseOpen && (
         <div className="flex items-stretch gap-2 rounded-2xl border-[1.3px] border-ink/70 bg-card-face p-3 shadow-[0_0.5em_2em_rgb(0_0_0_/_0.3)]">
-          <div className="flex flex-col justify-center gap-2">
+          <div className="flex flex-col justify-center gap-2 portrait:max-sm:grid portrait:max-sm:grid-cols-2">
             <button
               type="button"
               onClick={() => setRaiseTo(legal.maxRaise)}
@@ -59,7 +59,7 @@ export function ActionBar({ legal, onAction, pot }) {
           </div>
         </div>
       )}
-      <div className="flex items-center justify-end gap-2 portrait:justify-stretch portrait:[&>button]:flex-1">
+      <div className="flex items-center justify-end gap-2 portrait:[&>button]:flex-1">
         <button type="button" onClick={() => onAction('fold')} className={`${base} flex items-center justify-center border-[1.3px] border-ink/70 text-ink hover:bg-ink/10`}>
           Fold
         </button>
