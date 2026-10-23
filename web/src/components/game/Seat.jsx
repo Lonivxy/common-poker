@@ -124,7 +124,7 @@ export function Seat({ side, name, stack, cards = [], state = "active", active, 
   const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} badges={badges} />
 
   const cardEls = cards.length ? (
-    <div className={`seat-hand ${faded ? "opacity-60" : ""}`}>
+    <motion.div className="seat-hand" initial={{ opacity: 0 }} animate={{ opacity: faded ? 0.45 : 1 }} transition={{ duration: 0.2 }}>
       <Fan>
         {cards.map((c, i) => {
           const size = side === "hero" ? "lg" : "sm"
@@ -142,7 +142,7 @@ export function Seat({ side, name, stack, cards = [], state = "active", active, 
           )
         })}
       </Fan>
-    </div>
+    </motion.div>
   ) : null
 
   if (state === "empty") {

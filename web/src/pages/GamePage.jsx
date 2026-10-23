@@ -4,6 +4,9 @@ import { Table } from '../components/game/Table'
 import { Seat, StatusBadge, BetBadge } from '../components/game/Seat'
 import { ActionBar } from '../components/game/ActionBar'
 import { HomePage } from './HomePage'
+import { AnimatePresence, motion } from 'motion/react'
+import { RoomSettings } from '../components/game/RoomSettings'
+import { takeRoomPassword } from '../roomAccess'
 
 export function GamePage() {
   const { roomId } = useParams()
@@ -14,6 +17,9 @@ export function GamePage() {
   const [game, setGame] = useState(null)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('Connecting…')
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsFeedback, setSettingsFeedback] = useState(null)
+  const [notice, setNotice] = useState('')
   const [clock, setClock] = useState(() => ({ now: Date.now(), offset: 0 }))
   const creating = roomId === 'new'
   const requestedRoom = creating ? state?.room || undefined : roomId
@@ -21,13 +27,19 @@ export function GamePage() {
   const name = params.get('name') || sessionStorage.getItem('pokerName') || 'Player'
 
   useEffect(() => {
+    if (!notice) return
+    const timeout = setTimeout(() => setNotice(''), 3000)
+    return () => clearTimeout(timeout)
+  }, [notice])
+
+  useEffect(() => {
     let active = true
     let joined = false
     let ws
-    const reject = (message) => {
+    const reject = (message, code) => {
       active = false
       ws?.close()
-      navigate('/', { replace: true, state: { error: message, room: requestedRoom || '', private: requestedPrivate } })
+      navigate('/', { replace: true, state: { error: message, room: requestedRoom || '', private: requestedPrivate, passwordRequired: code === 'password_required' } })
     }
     // Defer opening so React StrictMode's setup/cleanup probe creates no ghost seat.
     const open = setTimeout(() => {
@@ -40,6 +52,7 @@ export function GamePage() {
       ws.onopen = () => ws.send(JSON.stringify({
         type: creating ? 'create' : 'join', room: requestedRoom, name,
         private: requestedPrivate,
+        password: creating ? undefined : takeRoomPassword(requestedRoom),
       }))
       ws.onmessage = (event) => {
         if (!active) return
@@ -47,8 +60,15 @@ export function GamePage() {
         const data = JSON.parse(event.data)
         if (data.type === 'ping') { ws.send(JSON.stringify({ type: 'pong' })); return }
         if (data.type === 'error') {
-          if (!joined) reject(data.message)
+          if (data.scope === 'settings') setSettingsFeedback({ pending: false, error: data.message })
+          else if (!joined) reject(data.message, data.code)
           else setError(data.message)
+          return
+        }
+        if (data.type === 'settings_saved') {
+          setSettingsFeedback(null)
+          setSettingsOpen(false)
+          setNotice('Room settings saved')
           return
         }
         if (data.type === 'state') {
@@ -70,6 +90,7 @@ export function GamePage() {
         if (!active) return
         if (!joined) reject('Cannot join the room.')
         else setStatus('Disconnected — return home to join again')
+        setSettingsFeedback({ pending: false, error: 'Connection lost. Rejoin to change settings.' })
       }
       ws.watchdog = setInterval(() => {
         if (Date.now() - alive > 35000) ws.close()
@@ -79,13 +100,16 @@ export function GamePage() {
   }, [requestedRoom, requestedPrivate, creating, name, navigate])
 
   const send = (data) => {
-    if (socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify(data))
+    if (socket.current?.readyState !== WebSocket.OPEN) return false
+    socket.current.send(JSON.stringify(data))
+    return true
   }
   const connected = status === 'Connected'
   const hero = game?.players.findIndex(p => p.id === game.you) ?? 0
   const seats = game?.players.map((p, i) => ({ ...p, index: i, side: ['hero', 'left', 'top', 'right'][(i - hero + 4) % 4] })).filter(p => p.connected) || []
   const canStart = connected && game?.host === game?.you && ['waiting', 'showdown'].includes(game?.street)
   const ready = game?.players.filter(p => p.connected && p.stack > 0).length >= 2
+  const isHost = game?.host === game?.you
 
   if (!game) return <HomePage pending />
 
@@ -96,6 +120,8 @@ export function GamePage() {
           <span className="font-mono text-sm text-ink-dim">{game?.room || (creating ? '' : roomId)}</span>
           <span className="rounded-full border border-ink/25 px-2 py-1 text-[10px] uppercase tracking-wider text-ink-dim">{game.private ? 'Private' : 'Public'}</span>
         </div>
+        <div className="flex items-center gap-2">
+        {isHost && <button type="button" disabled={!connected || settingsFeedback?.pending} onClick={() => { setSettingsFeedback(null); setNotice(''); setSettingsOpen(true) }} className="min-h-11 rounded-full border border-ink/30 px-3 text-xs">Settings</button>}
         <details className="relative">
           <summary aria-label="Menu" className="grid min-h-11 min-w-11 cursor-pointer list-none place-content-center gap-[7px] [&::-webkit-details-marker]:hidden">
             <span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" />
@@ -104,18 +130,32 @@ export function GamePage() {
             <button onClick={() => navigate('/')} className="w-full rounded-full px-4 py-2 text-left text-sm text-suit-dark hover:bg-suit-dark/10">Leave</button>
           </div>
         </details>
+        </div>
       </header>
+      <AnimatePresence>
+        {settingsOpen && isHost && <RoomSettings key="settings" game={game} connected={connected} feedback={settingsFeedback}
+          onClose={() => setSettingsOpen(false)} onSave={settings => {
+            if (send({ type: 'settings', ...settings })) setSettingsFeedback({ pending: true, error: '' })
+            else setSettingsFeedback({ pending: false, error: 'Connection lost. Rejoin to change settings.' })
+          }} />}
+      </AnimatePresence>
       <p className="sr-only" role="status">{game?.street}{game?.turn != null && ` · ${game.players[game.turn].name}'s turn`}</p>
       <main className="game-main">
         <div className="game-stage">
           <Table board={game?.board || []} pot={`$${(game?.pot ?? 0).toLocaleString()}`} />
-          {seats.map(p => <div key={p.id} className={`table-seat table-seat-${p.side}`}>
+          <AnimatePresence>
+          {seats.map(p => <motion.div key={p.id} className={`table-seat table-seat-${p.side}`}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.2 }}>
             <Seat {...p} stack={p.stack} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer}
               badges={<>{p.folded && game.street !== 'waiting' ? <StatusBadge status="x" /> : p.acted ? <StatusBadge status="d" /> : null}<BetBadge amount={p.bet || null} /></>} />
-          </div>)}
+          </motion.div>)}
+          </AnimatePresence>
         </div>
       </main>
       <footer className="game-footer">
+        <AnimatePresence>
+          {notice && <motion.p key={notice} role="status" className="room-notice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>{notice}</motion.p>}
+        </AnimatePresence>
         {error ? <p role="alert" className="mb-3 text-center text-sm text-red-300">{error}</p>
           : !connected && <p role="status" className="mb-3 text-center text-sm text-ink-dim">{status}</p>}
         {!error && connected && game.street === 'showdown' && <p role="status" className="game-result">{game.message}</p>}

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 
 export function Lobby({ onJoin, hasName }) {
   const [tables, setTables] = useState(null)
@@ -58,15 +59,18 @@ export function Lobby({ onJoin, hasName }) {
         ? 'No public tables yet. Turn off Private when hosting to list one here.'
         : hasName ? 'Choose a public table. Refresh to check for new tables.' : 'Enter your name above, then choose a public table.')}
     </p>
-    {tables?.length > 0 && <ul aria-label="Joinable tables" className="max-h-64 divide-y divide-ink/15 overflow-y-auto">
-      {tables.map(table => <li key={table.room} className="flex items-center gap-3 py-3">
+    {tables !== null && <ul aria-label="Joinable tables" className="max-h-64 divide-y divide-ink/15 overflow-y-auto">
+      <AnimatePresence initial={false}>
+      {tables.map(table => <motion.li key={table.room} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="flex items-center gap-3 py-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm tabular-nums">Table {table.room}</p>
           <p className="truncate text-xs text-ink-dim" title={table.host}>Hosted by {table.host}</p>
+          {table.passwordProtected && <p className="text-xs text-accent">Password required</p>}
         </div>
         <span className="text-xs tabular-nums text-ink-dim" aria-label={`${table.players} of ${table.capacity} seats occupied`}>{table.players} / {table.capacity}</span>
-        <button type="button" onClick={() => onJoin(table.room)} aria-label={`Join table ${table.room}`} className="min-h-11 rounded-full border border-ink/50 px-4 text-sm transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-accent">Join</button>
-      </li>)}
+        <button type="button" onClick={() => onJoin(table.room, table.passwordProtected)} aria-label={`Join table ${table.room}`} className="min-h-11 rounded-full border border-ink/50 px-4 text-sm transition-colors hover:border-accent hover:text-accent focus-visible:outline focus-visible:outline-accent">Join</button>
+      </motion.li>)}
+      </AnimatePresence>
     </ul>}
   </section>
 }
