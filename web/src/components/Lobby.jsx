@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 
-export function Lobby({ onJoin, hasName }) {
+export function Lobby({ onJoin }) {
   const [tables, setTables] = useState(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(true)
   const [refresh, setRefresh] = useState(0)
+  const reduce = useReducedMotion()
 
   useEffect(() => {
     let active = true
@@ -54,14 +56,13 @@ export function Lobby({ onJoin, hasName }) {
         {loading ? 'Refreshing…' : 'Refresh'}
       </button>
     </div>
-    <p role="status" className="mb-2 text-xs leading-relaxed text-ink-dim">
-      {tables === null ? 'Finding open tables…' : error || (tables.length === 0
-        ? 'No public tables yet. Turn off Private when hosting to list one here.'
-        : hasName ? 'Choose a public table. Refresh to check for new tables.' : 'Enter your name above, then choose a public table.')}
-    </p>
+    {(tables === null || error || (tables.length === 0 && !loading)) &&
+      <p role="status" className="mb-2 text-xs leading-relaxed text-ink-dim">
+        {tables === null ? 'Finding open tables…' : error || 'No public tables'}
+      </p>}
     {tables !== null && <ul aria-label="Joinable tables" className="max-h-64 divide-y divide-ink/15 overflow-y-auto">
       <AnimatePresence initial={false}>
-      {tables.map(table => <motion.li key={table.room} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="flex items-center gap-3 py-3">
+      {tables.map(table => <motion.li key={table.room} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduce ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.15 }} className="flex items-center gap-3 py-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm tabular-nums">Table {table.room}</p>
           <p className="truncate text-xs text-ink-dim" title={table.host}>Hosted by {table.host}</p>

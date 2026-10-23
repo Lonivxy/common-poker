@@ -21,10 +21,10 @@ export function ActionBar({ legal, onAction, pot }) {
     <AnimatePresence initial={false}>
       {raiseOpen && <motion.section
         key="raise-editor" id={panelId} aria-label="Choose a raise amount" className="raise-panel"
-        initial={{ opacity: 0, transform: reduce ? 'none' : 'translateY(8px)' }}
-        animate={{ opacity: 1, transform: 'none' }}
-        exit={{ opacity: 0, transform: reduce ? 'none' : 'translateY(8px)' }}
-        transition={{ duration: reduce ? 0.12 : 0.18, ease: [0.23, 1, 0.32, 1] }}
+        initial={reduce ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: reduce ? 1 : 0, y: reduce ? 0 : 8 }}
+        transition={{ duration: reduce ? 0 : 0.18, ease: [0.23, 1, 0.32, 1] }}
         onKeyDown={event => { if (event.key === 'Escape') close() }}
       >
         <div className="raise-heading">

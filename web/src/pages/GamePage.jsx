@@ -7,6 +7,7 @@ import { HomePage } from './HomePage'
 import { AnimatePresence, motion } from 'motion/react'
 import { RoomSettings } from '../components/game/RoomSettings'
 import { takeRoomPassword } from '../roomAccess'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 
 export function GamePage() {
   const { roomId } = useParams()
@@ -21,6 +22,7 @@ export function GamePage() {
   const [settingsFeedback, setSettingsFeedback] = useState(null)
   const [notice, setNotice] = useState('')
   const [clock, setClock] = useState(() => ({ now: Date.now(), offset: 0 }))
+  const reduce = useReducedMotion()
   const creating = roomId === 'new'
   const requestedRoom = creating ? state?.room || undefined : roomId
   const requestedPrivate = creating ? state?.private !== false : undefined
@@ -121,19 +123,24 @@ export function GamePage() {
           <span className="rounded-full border border-ink/25 px-2 py-1 text-[10px] uppercase tracking-wider text-ink-dim">{game.private ? 'Private' : 'Public'}</span>
         </div>
         <div className="flex items-center gap-2">
-        {isHost && <button type="button" disabled={!connected || settingsFeedback?.pending} onClick={() => { setSettingsFeedback(null); setNotice(''); setSettingsOpen(true) }} className="min-h-11 rounded-full border border-ink/30 px-3 text-xs">Settings</button>}
-        <details className="relative">
-          <summary aria-label="Menu" className="grid min-h-11 min-w-11 cursor-pointer list-none place-content-center gap-[7px] [&::-webkit-details-marker]:hidden">
-            <span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" />
-          </summary>
-          <div className="absolute right-0 top-10 w-44 rounded-2xl border border-ink/70 bg-card-face p-2">
-            <button onClick={() => navigate('/')} className="w-full rounded-full px-4 py-2 text-left text-sm text-suit-dark hover:bg-suit-dark/10">Leave</button>
-          </div>
-        </details>
+          <button type="button" disabled={!connected || (isHost && settingsFeedback?.pending)} onClick={() => { setSettingsFeedback(null); setNotice(''); setSettingsOpen(true) }} aria-label="Settings" title="Settings" className="grid size-11 place-items-center rounded-full border border-ink/30">
+            <svg className="fa-light fa-gear size-[19px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.45" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M10.7 2.8h2.6l.45 2.13a7.48 7.48 0 0 1 1.72.71l1.92-1.07 1.84 1.84-1.07 1.92c.31.54.55 1.12.71 1.72l2.13.45v2.6l-2.13.45c-.16.6-.4 1.18-.71 1.72l1.07 1.92-1.84 1.84-1.92-1.07c-.54.31-1.12.55-1.72.71l-.45 2.13h-2.6l-.45-2.13a7.48 7.48 0 0 1-1.72-.71l-1.92 1.07-1.84-1.84 1.07-1.92a7.48 7.48 0 0 1-.71-1.72L2.8 13.3v-2.6l2.13-.45c.16-.6.4-1.18.71-1.72L4.57 6.61l1.84-1.84 1.92 1.07c.54-.31 1.12-.55 1.72-.71L10.7 2.8Z" />
+              <circle cx="12" cy="12" r="3.15" />
+            </svg>
+          </button>
+          <details className="relative">
+            <summary aria-label="Menu" className="grid min-h-11 min-w-11 cursor-pointer list-none place-content-center gap-[7px] [&::-webkit-details-marker]:hidden">
+              <span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" /><span className="h-px w-[22px] bg-ink" />
+            </summary>
+            <div className="absolute right-0 top-10 w-44 rounded-2xl border border-ink/70 bg-card-face p-2">
+              <button onClick={() => navigate('/')} className="w-full rounded-full px-4 py-2 text-left text-sm text-suit-dark hover:bg-suit-dark/10">Leave</button>
+            </div>
+          </details>
         </div>
       </header>
       <AnimatePresence>
-        {settingsOpen && isHost && <RoomSettings key="settings" game={game} connected={connected} feedback={settingsFeedback}
+        {settingsOpen && <RoomSettings key="settings" game={game} connected={connected} feedback={settingsFeedback} isHost={isHost}
           onClose={() => setSettingsOpen(false)} onSave={settings => {
             if (send({ type: 'settings', ...settings })) setSettingsFeedback({ pending: true, error: '' })
             else setSettingsFeedback({ pending: false, error: 'Connection lost. Rejoin to change settings.' })
@@ -145,8 +152,8 @@ export function GamePage() {
           <Table board={game?.board || []} pot={`$${(game?.pot ?? 0).toLocaleString()}`} />
           <AnimatePresence>
           {seats.map(p => <motion.div key={p.id} className={`table-seat table-seat-${p.side}`}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, transition: { duration: 0.12 } }} transition={{ duration: 0.2 }}>
-            <Seat {...p} stack={p.stack} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer}
+            initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduce ? 1 : 0, transition: { duration: reduce ? 0 : 0.12 } }} transition={{ duration: reduce ? 0 : 0.2 }}>
+            <Seat {...p} board={game?.board || []} stack={p.stack} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer}
               badges={<>{p.folded && game.street !== 'waiting' ? <StatusBadge status="x" /> : p.acted ? <StatusBadge status="d" /> : null}<BetBadge amount={p.bet || null} /></>} />
           </motion.div>)}
           </AnimatePresence>
@@ -154,7 +161,7 @@ export function GamePage() {
       </main>
       <footer className="game-footer">
         <AnimatePresence>
-          {notice && <motion.p key={notice} role="status" className="room-notice" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>{notice}</motion.p>}
+          {notice && <motion.p key={notice} role="status" className="room-notice" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduce ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.15 }}>{notice}</motion.p>}
         </AnimatePresence>
         {error ? <p role="alert" className="mb-3 text-center text-sm text-red-300">{error}</p>
           : !connected && <p role="status" className="mb-3 text-center text-sm text-ink-dim">{status}</p>}

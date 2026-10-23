@@ -17,8 +17,8 @@ export function AnimatedDialog({ title, onClose, children }) {
   }, [])
 
   return <motion.dialog ref={dialog} className="room-dialog" aria-labelledby={titleId}
-    initial={{ opacity: 0, y: reduce ? 0 : 8 }} animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: reduce ? 0 : 4 }} transition={{ duration: reduce ? 0.12 : 0.18 }}
+    initial={reduce ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: reduce ? 1 : 0, y: reduce ? 0 : 4 }} transition={{ duration: reduce ? 0 : 0.18 }}
     onCancel={event => { event.preventDefault(); onClose() }}
     onClick={event => {
       if (event.target !== event.currentTarget) return

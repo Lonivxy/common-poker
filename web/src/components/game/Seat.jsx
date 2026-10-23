@@ -2,6 +2,7 @@ import { useEffect, useState } from "react"
 import { animate, motion, useMotionValue } from "motion/react"
 import { useReducedMotion } from "../../hooks/useReducedMotion"
 import { CardBack, PlayingCard } from "./PlayingCard"
+import { getPokerHandName } from "../../pokerHand"
 
 function PersonGlyph() {
   return (
@@ -41,11 +42,12 @@ function Avatar({ active, deadline, clockOffset, name }) {
   )
 }
 
-function Label({ name, stack, dealer, connected, badges }) {
+function Label({ name, stack, dealer, connected, badges, handName }) {
   return (
     <div className="seat-label">
       <div className="seat-name" title={name}>{name}<span className="sr-only">{dealer ? " · dealer" : ""}{!connected ? " · offline" : ""}</span></div>
       <div className="seat-stack">${stack.toLocaleString()}</div>
+      {handName && <div className="hand-rank">{handName}</div>}
       <div className="seat-badges">{badges}</div>
     </div>
   )
@@ -117,14 +119,18 @@ export function BetBadge({ amount }) {
  * side: "left" | "right" | "top" | "hero" — composition per table position.
  * Card and avatar sizes inherit the stage font size; labels stay readable.
  */
-export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer, badges }) {
+export function Seat({ side, name, stack, cards = [], board = [], state = "active", active, deadline, clockOffset, connected, dealer, badges }) {
   const faded = state === "folded"
   const [revealed, setRevealed] = useState(true)
+  const reduce = useReducedMotion()
+  const handName = !faded && cards?.length === 2 && cards.every(card => card?.rank) && (board?.length ?? 0) >= 3
+    ? getPokerHandName([...cards, ...board])
+    : null
   const avatar = <Avatar active={active} deadline={deadline} clockOffset={clockOffset} name={name} />
-  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} badges={badges} />
+  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} badges={badges} handName={handName} />
 
   const cardEls = cards.length ? (
-    <motion.div className="seat-hand" initial={{ opacity: 0 }} animate={{ opacity: faded ? 0.45 : 1 }} transition={{ duration: 0.2 }}>
+    <motion.div className="seat-hand" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: faded ? 0.45 : 1 }} transition={{ duration: reduce ? 0 : 0.2 }}>
       <Fan>
         {cards.map((c, i) => {
           const size = side === "hero" ? "lg" : "sm"

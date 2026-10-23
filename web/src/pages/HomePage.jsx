@@ -4,6 +4,7 @@ import githubIcon from '../assets/github.svg'
 import { Lobby } from '../components/Lobby'
 import { AnimatePresence, motion } from 'motion/react'
 import { queueRoomPassword } from '../roomAccess'
+import { useReducedMotion } from '../hooks/useReducedMotion'
 
 export function HomePage({ pending = false }) {
   const navigate = useNavigate()
@@ -14,6 +15,7 @@ export function HomePage({ pending = false }) {
   const [passwordRequired, setPasswordRequired] = useState(Boolean(state?.passwordRequired))
   const [password, setPassword] = useState('')
   const nameInput = useRef(null)
+  const reduce = useReducedMotion()
   const enter = (target, joinPassword = password) => {
     sessionStorage.setItem('pokerName', name.trim())
     if (target !== 'new') queueRoomPassword(target, joinPassword)
@@ -36,18 +38,14 @@ export function HomePage({ pending = false }) {
       <input ref={nameInput} aria-label="Your name" maxLength={20} placeholder="Your name" value={name} onChange={e => setName(e.target.value)} className={input} />
       <input aria-label="Room number" inputMode="numeric" maxLength={6} placeholder="Room number" value={room} onChange={e => { setRoom(e.target.value.replace(/\D/g, '')); setPassword(''); setPasswordRequired(false) }} className={input} />
       <AnimatePresence initial={false}>
-        {passwordRequired && <motion.div key="join-password" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }} className="flex flex-col gap-2">
+        {passwordRequired && <motion.div key="join-password" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduce ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.15 }} className="flex flex-col gap-2">
           <input autoFocus type="password" autoComplete="off" aria-label="Room password" maxLength={64} placeholder="Room password" value={password} onChange={event => setPassword(event.target.value)} className={`${input} w-full`}
             onKeyDown={event => { if (event.key === 'Enter' && name.trim() && room) enter(room) }} />
-          <p className="text-center text-xs text-ink-dim">This table requires a password.</p>
         </motion.div>}
       </AnimatePresence>
       <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-ink/25 px-4 py-3 text-left">
         <input type="checkbox" checked={privateRoom} onChange={e => setPrivateRoom(e.target.checked)} className="mt-1 size-4 shrink-0 accent-accent" />
-        <span className="min-w-0">
-          <span className="block text-sm">Private table <span className="text-ink-dim">(default)</span></span>
-          <span className="mt-1 block text-xs leading-relaxed text-ink-dim">Hidden from the lobby. Anyone with the room number can still join.</span>
-        </span>
+        <span className="min-w-0 text-sm">Private room</span>
       </label>
       <div className="flex gap-3">
         <button disabled={!name.trim()} onClick={() => enter('new')} className="h-12 flex-1 rounded-full border border-ink/70 disabled:opacity-40">Host</button>
@@ -55,7 +53,7 @@ export function HomePage({ pending = false }) {
       </div>
       {state?.error && <p role="alert" className="text-center text-sm text-red-300">{state.error}</p>}
     </fieldset>
-    {pending ? <p role="status" className="text-sm text-ink-dim">Connecting to table…</p> : <Lobby onJoin={joinTable} hasName={Boolean(name.trim())} />}
+    {pending ? <p role="status" className="text-sm text-ink-dim">Connecting to table…</p> : <Lobby onJoin={joinTable} />}
     <a href="https://github.com/Moreallure/common-poker" target="_blank" rel="noreferrer" aria-label="GitHub" className="mt-auto self-end size-6 opacity-60"><img src={githubIcon} alt="" className="size-full invert" /></a>
   </main>
 }
