@@ -6,7 +6,6 @@ import { ActionBar } from '../components/game/ActionBar'
 import { HomePage } from './HomePage'
 import { AnimatePresence, motion } from 'motion/react'
 import { RoomSettings } from '../components/game/RoomSettings'
-import { takeRoomPassword } from '../roomAccess'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 
 export function GamePage() {
@@ -38,10 +37,10 @@ export function GamePage() {
     let active = true
     let joined = false
     let ws
-    const reject = (message, code) => {
+    const reject = (message) => {
       active = false
       ws?.close()
-      navigate('/', { replace: true, state: { error: message, room: requestedRoom || '', private: requestedPrivate, passwordRequired: code === 'password_required' } })
+      navigate('/', { replace: true, state: { error: message, room: requestedRoom || '', private: requestedPrivate } })
     }
     // Defer opening so React StrictMode's setup/cleanup probe creates no ghost seat.
     const open = setTimeout(() => {
@@ -54,7 +53,6 @@ export function GamePage() {
       ws.onopen = () => ws.send(JSON.stringify({
         type: creating ? 'create' : 'join', room: requestedRoom, name,
         private: requestedPrivate,
-        password: creating ? undefined : takeRoomPassword(requestedRoom),
       }))
       ws.onmessage = (event) => {
         if (!active) return
@@ -63,7 +61,7 @@ export function GamePage() {
         if (data.type === 'ping') { ws.send(JSON.stringify({ type: 'pong' })); return }
         if (data.type === 'error') {
           if (data.scope === 'settings') setSettingsFeedback({ pending: false, error: data.message })
-          else if (!joined) reject(data.message, data.code)
+          else if (!joined) reject(data.message)
           else setError(data.message)
           return
         }

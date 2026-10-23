@@ -42,7 +42,7 @@ class ServerTests(WebSocketTestCase):
             response = self.client.get("/rooms", headers=ORIGIN)
             self.assertEqual(response.headers["cache-control"], "no-store")
             self.assertEqual(response.json(), {"rooms": [
-                {"room": "42", "host": "Host", "players": 1, "capacity": 4, "passwordProtected": False}]})
+                {"room": "42", "host": "Host", "players": 1, "capacity": 4}]})
             b, _ = self.connect(stack, type="join", room="42", name="Guest")
             state(a)
             self.assertEqual(self.client.get("/rooms").json()["rooms"][0]["players"], 2)
@@ -56,7 +56,7 @@ class ServerTests(WebSocketTestCase):
             a.close()
             state(b)
             self.assertEqual(self.client.get("/rooms").json(), {"rooms": [
-                {"room": "42", "host": "Guest", "players": 1, "capacity": 4, "passwordProtected": False}]})
+                {"room": "42", "host": "Guest", "players": 1, "capacity": 4}]})
 
     def test_lobby_omits_full_empty_expired_and_running_tables(self):
         for code, count in [("1", 4), ("2", 0), ("3", 1), ("4", 2), ("5", 4)]:
@@ -67,9 +67,9 @@ class ServerTests(WebSocketTestCase):
         main.rooms["4"].street = "preflop"
         main.rooms["5"].players[0].connected = False
         self.assertEqual(self.client.get("/rooms").json(), {"rooms": [
-            {"room": "5", "host": "Player", "players": 3, "capacity": 4, "passwordProtected": False}]})
+            {"room": "5", "host": "Player", "players": 3, "capacity": 4}]})
 
-    def test_host_settings_control_lobby_and_enforce_password(self):
+    def test_host_settings_control_lobby(self):
         with contextlib.ExitStack() as stack:
             host, first = self.connect(stack, type="create", room="81")
             guest, _ = self.connect(stack, type="join", room="81")
@@ -81,54 +81,21 @@ class ServerTests(WebSocketTestCase):
             self.assertEqual(state(guest)["type"], "settings_saved")
             state(host)
             self.assertTrue(main.rooms["81"].private)
-            host.send_json({"type": "settings", "private": False, "password": "test pass"})
+            host.send_json({"type": "settings", "private": False})
             updated = state(host)
             self.assertFalse(updated["private"])
-            self.assertTrue(updated["passwordProtected"])
             self.assertEqual(state(host)["type"], "settings_saved")
             state(guest)
             listed = self.client.get("/rooms").json()["rooms"][0]
-            self.assertTrue(listed["passwordProtected"])
-            self.assertNotIn("test pass", str(updated) + str(listed))
-            self.assertNotIn("password_hash", updated)
-            for password in ["", "wrong"]:
-                _, error = self.connect(stack, type="join", room="81", password=password)
-                self.assertEqual(error["code"], "password_required")
-                self.assertEqual(len(main.rooms["81"].players), 2)
-            _, joined = self.connect(stack, type="join", room="81", password="test pass")
-            self.assertEqual(len(joined["players"]), 3)
-            self.assertEqual(joined["host"], first["you"])
-
-    def test_password_preservation_change_removal_and_host_transfer(self):
-        with contextlib.ExitStack() as stack:
-            host, _ = self.connect(stack, type="create", room="82")
-            guest, second = self.connect(stack, type="join", room="82")
-            state(host)
-            for settings in [{"private": False, "password": "first"}, {"private": True}]:
-                host.send_json({"type": "settings", **settings})
-                state(host); state(host); state(guest)
-            self.assertTrue(main.rooms["82"].password_hash)
-            self.assertEqual(self.client.get("/rooms").json()["rooms"], [])
-            host.close()
-            self.assertEqual(state(guest)["host"], second["you"])
-            guest.send_json({"type": "settings", "private": False, "password": "second"})
-            state(guest); state(guest)
-            _, rejected = self.connect(stack, type="join", room="82", password="first")
-            self.assertEqual(rejected["code"], "password_required")
-            guest.send_json({"type": "settings", "private": False, "password": ""})
-            self.assertFalse(state(guest)["passwordProtected"])
-            self.assertEqual(state(guest)["type"], "settings_saved")
-            _, joined = self.connect(stack, type="join", room="82")
-            self.assertFalse(joined["passwordProtected"])
+            self.assertEqual(listed["room"], "81")
 
     def test_invalid_settings_do_not_mutate_room(self):
         with contextlib.ExitStack() as stack:
             host, _ = self.connect(stack, type="create", room="83")
-            for settings in [{"private": 1}, {"private": False, "password": True}, {"private": False, "password": "x" * 65}]:
+            for settings in [{"private": 1}, {"private": "invalid"}]:
                 host.send_json({"type": "settings", **settings})
                 self.assertEqual(state(host)["scope"], "settings")
                 self.assertTrue(main.rooms["83"].private)
-                self.assertIsNone(main.rooms["83"].password_hash)
 
     def test_private_rooms_are_hidden_but_joinable_by_room_number(self):
         with contextlib.ExitStack() as stack:

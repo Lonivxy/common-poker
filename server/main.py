@@ -11,7 +11,6 @@ from fastapi import FastAPI, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from .engine import Game, Player
-from .passwords import check_password, hash_password, validate_password
 
 ORIGINS = {"https://commonpoker.vercel.app", "http://localhost:5173", "http://127.0.0.1:5173",
            "http://localhost:5174", "http://127.0.0.1:5174",
@@ -28,16 +27,6 @@ connections = {}
 attempts = {}
 open_sockets = {}
 gate = asyncio.Lock()
-password_work = asyncio.Semaphore(2)
-
-
-class RoomPasswordError(ValueError):
-    pass
-
-
-async def password_task(fn, *args):
-    async with password_work:
-        return await asyncio.to_thread(fn, *args)
 
 
 async def close(ws, code=1013, reason=""):
@@ -159,8 +148,7 @@ async def lobby(response: Response):
             if (not game.private and game.street in ("waiting", "showdown") and 0 < len(players) < 4
                     and now - game.updated <= 3600):
                 available.append({"room": game.code, "host": players[0].name,
-                                  "players": len(players), "capacity": 4,
-                                  "passwordProtected": game.password_hash is not None})
+                                  "players": len(players), "capacity": 4})
     return {"rooms": available}
 
 
@@ -194,13 +182,6 @@ async def gameplay(ws: WebSocket):
         private = hello.get("private", True)
         if hello.get("type") == "create" and not isinstance(private, bool):
             raise ValueError("Private must be true or false")
-        candidate, checked_hash, password_ok = None, None, False
-        if hello.get("type") == "join":
-            password = validate_password(hello.get("password", ""))
-            candidate = rooms.get(code)
-            if candidate:
-                checked_hash = candidate.password_hash
-                password_ok = await password_task(check_password, password, checked_hash)
         async with gate:
             if hello.get("type") == "create":
                 if len(rooms) >= 10: raise ValueError("All 10 tables are occupied. Try later.")
@@ -216,10 +197,6 @@ async def gameplay(ws: WebSocket):
             elif hello.get("type") == "join":
                 game = rooms.get(code)
                 if not game: raise ValueError("Room not found")
-                if game is not candidate or game.password_hash is not checked_hash:
-                    raise ValueError("Room settings changed. Try joining again.")
-                if not password_ok:
-                    raise RoomPasswordError("Room password required or incorrect")
                 if game.street not in ("waiting", "showdown"): raise ValueError("Wait until the current hand ends to join")
                 game.remove_disconnected()
                 if len(game.players) >= 4: raise ValueError("Table is full")
@@ -258,15 +235,7 @@ async def gameplay(ws: WebSocket):
                             raise ValueError("Must be in room to change room settings")
                         if not isinstance(data.get("private"), bool):
                             raise ValueError("Private must be true or false")
-                        if "password" in data: validate_password(data["password"])
-                    # Password work never holds the shared game lock.
-                    replacement = await password_task(hash_password, data["password"]) if "password" in data else None
-                    async with gate:
-                        if rooms.get(game.code) is not game: break
-                        if not any(p.id == pid for p in game.players if p.connected):
-                            raise ValueError("Must be in room to change room settings")
                         game.private = data["private"]
-                        if "password" in data: game.password_hash = replacement
                         game.updated = time.monotonic()
                         broadcast(game)
                         peer.send({"type": "settings_saved"})
@@ -295,8 +264,7 @@ async def gameplay(ws: WebSocket):
                 except ValueError as exc:
                     peer.send({"type": "error", "message": str(exc)})
     except (ValueError, json.JSONDecodeError) as exc:
-        peer.send({"type": "error", "message": str(exc),
-                   **({"code": "password_required"} if isinstance(exc, RoomPasswordError) else {})})
+        peer.send({"type": "error", "message": str(exc)})
         # Let the validation error reach the client before closing its handshake.
         with suppress(asyncio.TimeoutError):
             await asyncio.wait_for(peer.queue.join(), 1)
