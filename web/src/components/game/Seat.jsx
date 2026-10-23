@@ -42,10 +42,17 @@ function Avatar({ active, deadline, clockOffset, name }) {
   )
 }
 
-function Label({ name, stack, dealer, connected, badges, handName }) {
+function Label({ name, stack, dealer, connected, badges, handName, isHost }) {
   return (
     <div className="seat-label">
-      <div className="seat-name" title={name}>{name}<span className="sr-only">{dealer ? " · dealer" : ""}{!connected ? " · offline" : ""}</span></div>
+      <div className="seat-name flex items-center justify-center gap-1" title={name}>
+        {isHost && <svg viewBox="0 0 20 20" className="size-[1em] shrink-0 text-accent" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="m2.5 6.5 4.5 3 3-6 3 6 4.5-3L16 15.5H4L2.5 6.5Z" />
+          <path d="M5 17.5h10" />
+        </svg>}
+        <span className="min-w-0 truncate">{name}</span>
+        <span className="sr-only">{isHost ? " · host" : ""}{dealer ? " · dealer" : ""}{!connected ? " · offline" : ""}</span>
+      </div>
       <div className="seat-stack">${stack.toLocaleString()}</div>
       {handName && <div className="hand-rank">{handName}</div>}
       <div className="seat-badges">{badges}</div>
@@ -119,7 +126,7 @@ export function BetBadge({ amount }) {
  * side: "left" | "right" | "top" | "hero" — composition per table position.
  * Card and avatar sizes inherit the stage font size; labels stay readable.
  */
-export function Seat({ side, name, stack, cards = [], board = [], state = "active", active, deadline, clockOffset, connected, dealer, badges }) {
+export function Seat({ side, name, stack, cards = [], board = [], state = "active", active, deadline, clockOffset, connected, dealer, badges, isHost = false }) {
   const faded = state === "folded"
   const cardKey = String(cards?.[0]?.rank || '') + String(cards?.[0]?.suit || '') + String(cards?.[1]?.rank || '') + String(cards?.[1]?.suit || '')
   const [lastCardKey, setLastCardKey] = useState(cardKey)
@@ -134,7 +141,7 @@ export function Seat({ side, name, stack, cards = [], board = [], state = "activ
     ? getPokerHandName([...cards, ...board])
     : null
   const avatar = <Avatar active={active} deadline={deadline} clockOffset={clockOffset} name={name} />
-  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} badges={badges} handName={handName} />
+  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} badges={badges} handName={handName} isHost={isHost} />
 
   const cardEls = cards.length ? (
     <motion.div className="seat-hand" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: faded ? 0.45 : 1 }} transition={{ duration: reduce ? 0 : 0.2 }}>

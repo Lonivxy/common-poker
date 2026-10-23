@@ -152,7 +152,7 @@ export function GamePage() {
           <AnimatePresence>
           {seats.map(p => <motion.div key={p.id} className={`table-seat table-seat-${p.side}`}
             initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduce ? 1 : 0, transition: { duration: reduce ? 0 : 0.12 } }} transition={{ duration: reduce ? 0 : 0.2 }}>
-            <Seat {...p} board={game?.board || []} stack={p.stack} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer}
+            <Seat {...p} board={game?.board || []} stack={p.stack} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer} isHost={p.id === game.host}
               badges={<>{p.folded && game.street !== 'waiting' ? <StatusBadge status="x" /> : p.acted ? <StatusBadge status="d" /> : null}<BetBadge amount={p.bet || null} /></>} />
           </motion.div>)}
           </AnimatePresence>
