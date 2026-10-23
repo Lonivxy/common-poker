@@ -7,12 +7,15 @@ import time
 from collections import deque
 from contextlib import asynccontextmanager, suppress
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
 from .engine import Game, Player
+from .passwords import check_password, hash_password, validate_password
 
 ORIGINS = {"https://commonpoker.vercel.app", "http://localhost:5173", "http://127.0.0.1:5173",
+           "http://localhost:5174", "http://127.0.0.1:5174",
+           "http://localhost:5175", "http://127.0.0.1:5175",
            "http://localhost:4173", "http://127.0.0.1:4173"}
 if os.getenv("LOCAL_ORIGIN"):
     ORIGINS.add(os.environ["LOCAL_ORIGIN"])
@@ -25,6 +28,16 @@ connections = {}
 attempts = {}
 open_sockets = {}
 gate = asyncio.Lock()
+password_work = asyncio.Semaphore(2)
+
+
+class RoomPasswordError(ValueError):
+    pass
+
+
+async def password_task(fn, *args):
+    async with password_work:
+        return await asyncio.to_thread(fn, *args)
 
 
 async def close(ws, code=1013, reason=""):
@@ -106,8 +119,9 @@ async def ticker():
         async with gate:
             for code, game in list(rooms.items()):
                 if game.deadline and time.time() >= game.deadline:
-                    game.action(game.turn, "fold")
-                    broadcast(game)
+                    if game.turn is not None and 0 <= game.turn < len(game.players):
+                        game.action(game.turn, "fold")
+                        broadcast(game)
                 if not any(p.connected for p in game.players) or time.monotonic() - game.updated > 3600:
                     for p in game.players:
                         peer = connections.get(p.id)
@@ -132,6 +146,22 @@ app.add_middleware(CORSMiddleware, allow_origins=sorted(ORIGINS), allow_methods=
 @app.get("/health")
 async def health():
     return {"status": "ok", "games": len(rooms)}
+
+
+@app.get("/rooms")
+async def lobby(response: Response):
+    response.headers["Cache-Control"] = "no-store"
+    now = time.monotonic()
+    async with gate:
+        available = []
+        for game in rooms.values():
+            players = [p for p in game.players if p.connected]
+            if (not game.private and game.street in ("waiting", "showdown") and 0 < len(players) < 4
+                    and now - game.updated <= 3600):
+                available.append({"room": game.code, "host": players[0].name,
+                                  "players": len(players), "capacity": 4,
+                                  "passwordProtected": game.password_hash is not None})
+    return {"rooms": available}
 
 
 @app.websocket("/ws")
@@ -161,6 +191,16 @@ async def gameplay(ws: WebSocket):
         if hello.get("type") == "join" or "room" in hello:
             if not isinstance(code, str) or not re.fullmatch(r"[0-9]{1,6}", code):
                 raise ValueError("Room number must be 1–6 digits")
+        private = hello.get("private", True)
+        if hello.get("type") == "create" and not isinstance(private, bool):
+            raise ValueError("Private must be true or false")
+        candidate, checked_hash, password_ok = None, None, False
+        if hello.get("type") == "join":
+            password = validate_password(hello.get("password", ""))
+            candidate = rooms.get(code)
+            if candidate:
+                checked_hash = candidate.password_hash
+                password_ok = await password_task(check_password, password, checked_hash)
         async with gate:
             if hello.get("type") == "create":
                 if len(rooms) >= 10: raise ValueError("All 10 tables are occupied. Try later.")
@@ -171,11 +211,15 @@ async def gameplay(ws: WebSocket):
                     while code in rooms: code = str(secrets.randbelow(900000) + 100000)
                 elif code in rooms:
                     raise ValueError("Room number is already in use")
-                game = Game(code, owner_ip=ip)
+                game = Game(code, owner_ip=ip, private=private)
                 rooms[code] = game
             elif hello.get("type") == "join":
                 game = rooms.get(code)
                 if not game: raise ValueError("Room not found")
+                if game is not candidate or game.password_hash is not checked_hash:
+                    raise ValueError("Room settings changed. Try joining again.")
+                if not password_ok:
+                    raise RoomPasswordError("Room password required or incorrect")
                 if game.street not in ("waiting", "showdown"): raise ValueError("Wait until the current hand ends to join")
                 game.remove_disconnected()
                 if len(game.players) >= 4: raise ValueError("Table is full")
@@ -206,6 +250,29 @@ async def gameplay(ws: WebSocket):
             if data.get("type") == "pong":
                 last_pong = now
                 continue
+            if data.get("type") == "settings":
+                try:
+                    async with gate:
+                        if rooms.get(game.code) is not game: break
+                        if not any(p.id == pid for p in game.players if p.connected):
+                            raise ValueError("Must be in room to change room settings")
+                        if not isinstance(data.get("private"), bool):
+                            raise ValueError("Private must be true or false")
+                        if "password" in data: validate_password(data["password"])
+                    # Password work never holds the shared game lock.
+                    replacement = await password_task(hash_password, data["password"]) if "password" in data else None
+                    async with gate:
+                        if rooms.get(game.code) is not game: break
+                        if not any(p.id == pid for p in game.players if p.connected):
+                            raise ValueError("Must be in room to change room settings")
+                        game.private = data["private"]
+                        if "password" in data: game.password_hash = replacement
+                        game.updated = time.monotonic()
+                        broadcast(game)
+                        peer.send({"type": "settings_saved"})
+                except ValueError as exc:
+                    peer.send({"type": "error", "scope": "settings", "message": str(exc)})
+                continue
             async with gate:
                 try:
                     if rooms.get(game.code) is not game: break
@@ -228,7 +295,8 @@ async def gameplay(ws: WebSocket):
                 except ValueError as exc:
                     peer.send({"type": "error", "message": str(exc)})
     except (ValueError, json.JSONDecodeError) as exc:
-        peer.send({"type": "error", "message": str(exc)})
+        peer.send({"type": "error", "message": str(exc),
+                   **({"code": "password_required"} if isinstance(exc, RoomPasswordError) else {})})
         # Let the validation error reach the client before closing its handshake.
         with suppress(asyncio.TimeoutError):
             await asyncio.wait_for(peer.queue.join(), 1)

@@ -4,3 +4,8 @@ __pycache__/
 .env
 web/node_modules/
 web/dist/
+web/.env.production
+server/deploy/nginx.production.conf
+
+.env.local
+.env.*.local
