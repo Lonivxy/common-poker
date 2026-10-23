@@ -3,7 +3,11 @@ import { AnimatedDialog } from '../AnimatedDialog'
 import { setReducedMotion, useReducedMotion } from '../../hooks/useReducedMotion'
 
 export function RoomSettings({ game, feedback, connected, onSave, onClose }) {
-  const [privateRoom, setPrivateRoom] = useState(Boolean(game.private))
+  const currentName = game.players.find(player => player.id === game.you)?.name ?? ''
+  const [privateDraft, setPrivateDraft] = useState(null)
+  const [nameDraft, setNameDraft] = useState(null)
+  const privateRoom = privateDraft ?? Boolean(game.private)
+  const playerName = nameDraft ?? currentName
   const reduce = useReducedMotion()
   const busy = feedback?.pending
 
@@ -11,11 +15,24 @@ export function RoomSettings({ game, feedback, connected, onSave, onClose }) {
     <AnimatedDialog title="Settings" onClose={onClose}>
       <form onSubmit={event => {
         event.preventDefault()
-        onSave({ private: privateRoom })
+        onSave({ private: privateRoom, name: playerName.trim() })
       }}>
         <fieldset disabled={busy || !connected} className="flex min-w-0 flex-col gap-4">
+          <label className="block text-sm">
+            <span className="mb-2 block">Display name</span>
+            <input
+              className="room-input"
+              type="text"
+              name="displayName"
+              value={playerName}
+              onChange={event => setNameDraft(event.target.value)}
+              maxLength={20}
+              autoComplete="nickname"
+              required
+            />
+          </label>
           <label className="room-option">
-            <input type="checkbox" checked={privateRoom} onChange={event => setPrivateRoom(event.target.checked)} />
+            <input type="checkbox" checked={privateRoom} onChange={event => setPrivateDraft(event.target.checked)} />
             <span>Private room</span>
           </label>
           <label className="room-option border-t border-suit-dark/20 pt-4">

@@ -14,6 +14,7 @@ export function GamePage() {
   const navigate = useNavigate()
   const { state } = useLocation()
   const socket = useRef(null)
+  const pendingName = useRef(null)
   const [game, setGame] = useState(null)
   const [error, setError] = useState('')
   const [status, setStatus] = useState('Connecting…')
@@ -60,12 +61,23 @@ export function GamePage() {
         const data = JSON.parse(event.data)
         if (data.type === 'ping') { ws.send(JSON.stringify({ type: 'pong' })); return }
         if (data.type === 'error') {
-          if (data.scope === 'settings') setSettingsFeedback({ pending: false, error: data.message })
+          if (data.scope === 'settings') {
+            pendingName.current = null
+            setSettingsFeedback({ pending: false, error: data.message })
+          }
           else if (!joined) reject(data.message)
           else setError(data.message)
           return
         }
         if (data.type === 'settings_saved') {
+          if (pendingName.current !== null) {
+            const updatedName = pendingName.current
+            try { sessionStorage.setItem('pokerName', updatedName) } catch { /* Browser storage can be unavailable. */ }
+            const url = new URL(window.location.href)
+            url.searchParams.set('name', updatedName)
+            window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}${url.hash}`)
+            pendingName.current = null
+          }
           setSettingsFeedback(null)
           setSettingsOpen(false)
           setNotice('Room settings saved')
@@ -90,6 +102,7 @@ export function GamePage() {
         if (!active) return
         if (!joined) reject('Cannot join the room.')
         else {
+          pendingName.current = null
           setStatus('Disconnected — return home to join again')
           setSettingsFeedback({ pending: false, error: 'Connection lost. Rejoin to change settings.' })
         }
@@ -141,8 +154,13 @@ export function GamePage() {
       <AnimatePresence>
         {settingsOpen && <RoomSettings key="settings" game={game} connected={connected} feedback={settingsFeedback}
           onClose={() => setSettingsOpen(false)} onSave={settings => {
-            if (send({ type: 'settings', ...settings })) setSettingsFeedback({ pending: true, error: '' })
-            else setSettingsFeedback({ pending: false, error: 'Connection lost. Rejoin to change settings.' })
+            if (send({ type: 'settings', ...settings })) {
+              pendingName.current = settings.name
+              setSettingsFeedback({ pending: true, error: '' })
+            } else {
+              pendingName.current = null
+              setSettingsFeedback({ pending: false, error: 'Connection lost. Rejoin to change settings.' })
+            }
           }} />}
       </AnimatePresence>
       <p className="sr-only" role="status">{game?.street}{game?.turn != null && ` · ${game.players[game.turn].name}'s turn`}</p>

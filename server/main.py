@@ -231,11 +231,18 @@ async def gameplay(ws: WebSocket):
                 try:
                     async with gate:
                         if rooms.get(game.code) is not game: break
-                        if not any(p.id == pid for p in game.players if p.connected):
+                        player = next((p for p in game.players if p.id == pid and p.connected), None)
+                        if not player:
                             raise ValueError("Must be in room to change room settings")
                         if not isinstance(data.get("private"), bool):
                             raise ValueError("Private must be true or false")
+                        updated_name = data.get("name")
+                        if "name" in data and (not isinstance(updated_name, str)
+                                                or not 1 <= len(updated_name.strip()) <= 20):
+                            raise ValueError("Name must be 1–20 characters")
                         game.private = data["private"]
+                        if "name" in data:
+                            player.name = updated_name.strip()
                         game.updated = time.monotonic()
                         broadcast(game)
                         peer.send({"type": "settings_saved"})
