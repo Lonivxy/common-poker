@@ -31,7 +31,14 @@ export function HomePage({ pending = false }) {
     else if (protectedRoom) return
     else enter(target, '')
   }
-  return <main aria-busy={pending} style={{ paddingLeft: 'max(1.5rem, env(safe-area-inset-left))', paddingRight: 'max(1.5rem, env(safe-area-inset-right))' }} className="flex min-h-dvh flex-col items-center justify-center gap-6 pt-[calc(env(safe-area-inset-top)+2rem)] pb-[calc(env(safe-area-inset-bottom)+4rem)] sm:gap-8">
+  return <main aria-busy={pending}
+    style={{
+      paddingLeft: 'max(1.5rem, env(safe-area-inset-left))',
+      paddingRight: 'max(1.5rem, env(safe-area-inset-right))',
+      paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
+      paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+    }}
+    className="relative flex min-h-dvh flex-col items-center justify-center gap-6 sm:gap-8">
     <h1 className="w-full text-center text-[clamp(2.6rem,9vmin,4.5rem)] leading-none font-mono">Common Poker</h1>
     <fieldset disabled={pending} className="m-0 flex w-full max-w-xs flex-col items-center gap-3 border-0 p-0 text-center">
       <input ref={nameInput} aria-label="Your name" maxLength={20} placeholder="Your name" value={name} onChange={e => setName(e.target.value)} className={input} />
@@ -49,6 +56,6 @@ export function HomePage({ pending = false }) {
       {state?.error && <p role="alert" className="text-center text-sm text-red-300">{state.error}</p>}
     </fieldset>
     {pending ? <p role="status" className="text-sm text-ink-dim">Connecting to table…</p> : <Lobby onJoin={joinTable} />}
-    <a href="https://github.com/Moreallure/common-poker" target="_blank" rel="noreferrer" aria-label="GitHub" className="mt-auto self-end size-6 opacity-60"><img src={githubIcon} alt="" className="size-full invert" /></a>
+    <a href="https://github.com/Moreallure/common-poker" target="_blank" rel="noreferrer" aria-label="GitHub" className="absolute bottom-4 right-4 size-6 opacity-60 transition-opacity hover:opacity-100 sm:bottom-6 sm:right-6"><img src={githubIcon} alt="" className="size-full invert" /></a>
   </main>
 }
