@@ -19,7 +19,7 @@ export function HomePage({ pending = false }) {
     sessionStorage.setItem('pokerName', name.trim())
     if (target !== 'new') queueRoomPassword(target, joinPassword)
     navigate(`/game/${target}?name=${encodeURIComponent(name.trim())}`, {
-      state: { room: target === 'new' ? room : target, private: false },
+      state: { room: target === 'new' ? room : target, private: true },
     })
   }
   const input = 'h-12 w-full rounded-full border border-ink/40 bg-transparent px-6 text-center text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none'

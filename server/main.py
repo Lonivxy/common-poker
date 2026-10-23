@@ -254,8 +254,8 @@ async def gameplay(ws: WebSocket):
                 try:
                     async with gate:
                         if rooms.get(game.code) is not game: break
-                        if pid != next((p.id for p in game.players if p.connected), None):
-                            raise ValueError("Only the host can change room settings")
+                        if not any(p.id == pid for p in game.players if p.connected):
+                            raise ValueError("Must be in room to change room settings")
                         if not isinstance(data.get("private"), bool):
                             raise ValueError("Private must be true or false")
                         if "password" in data: validate_password(data["password"])
@@ -263,8 +263,8 @@ async def gameplay(ws: WebSocket):
                     replacement = await password_task(hash_password, data["password"]) if "password" in data else None
                     async with gate:
                         if rooms.get(game.code) is not game: break
-                        if pid != next((p.id for p in game.players if p.connected), None):
-                            raise ValueError("Only the host can change room settings")
+                        if not any(p.id == pid for p in game.players if p.connected):
+                            raise ValueError("Must be in room to change room settings")
                         game.private = data["private"]
                         if "password" in data: game.password_hash = replacement
                         game.updated = time.monotonic()
