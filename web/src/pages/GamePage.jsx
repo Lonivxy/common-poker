@@ -116,7 +116,7 @@ export function GamePage() {
 
   return (
     <div className="game-page">
-      <header className="game-header">
+      <header className="game-header landscape:absolute landscape:left-0 landscape:right-0 landscape:top-0 landscape:w-full">
         <div className="flex items-center gap-2">
           <span className="font-mono text-sm text-ink-dim">{game?.room || (creating ? '' : roomId)}</span>
           <span className="rounded-full border border-ink/25 px-2 py-1 text-[10px] uppercase tracking-wider text-ink-dim">{game.private ? 'Private' : 'Public'}</span>
@@ -158,14 +158,14 @@ export function GamePage() {
           </AnimatePresence>
         </div>
       </main>
-      <footer className="game-footer">
+      <footer className="game-footer landscape:absolute landscape:left-0 landscape:right-0 landscape:bottom-0 landscape:w-full landscape:pointer-events-none">
         <AnimatePresence>
           {notice && <motion.p key={notice} role="status" className="room-notice" initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: reduce ? 1 : 0 }} transition={{ duration: reduce ? 0 : 0.15 }}>{notice}</motion.p>}
         </AnimatePresence>
         {error ? <p role="alert" className="game-status text-red-300">{error}</p>
           : !connected && <p role="status" className="game-status text-ink-dim">{status}</p>}
-        {!error && connected && game.street === 'showdown' && <p role="status" className="game-result">{game.message}</p>}
-        {canStart ? <div className="game-start-row"><button disabled={!ready} title={!ready ? 'Waiting for another player with chips' : undefined} onClick={() => send({ type: 'start' })} className="action-button action-primary game-start-button">{game.street === 'waiting' ? 'Deal' : 'Next hand'}</button></div>
+        {!error && connected && game.street === 'showdown' && <p role="status" className="game-result landscape:absolute landscape:bottom-3 landscape:left-4 sm:landscape:left-6 landscape:max-w-[40%] landscape:text-left">{game.message}</p>}
+        {canStart ? <div className="game-start-row landscape:flex landscape:justify-end landscape:w-full"><button disabled={!ready} title={!ready ? 'Waiting for another player with chips' : undefined} onClick={() => send({ type: 'start' })} className="action-button action-primary game-start-button">{game.street === 'waiting' ? 'Deal' : 'Next hand'}</button></div>
           : game?.legal && connected ? <ActionBar key={`${game.street}-${game.deadline}`} legal={game.legal} pot={game.pot} onAction={(action, amount) => send({ type: 'action', action, amount, turn: game.deadline })} />
             : null}
       </footer>
