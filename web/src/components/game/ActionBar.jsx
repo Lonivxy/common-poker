@@ -17,7 +17,7 @@ export function ActionBar({ legal, onAction, pot }) {
     { label: 'Pot', value: clamp(pot) },
   ]
 
-  return <div className="action-bar">
+  return <div className="action-bar landscape:ml-auto landscape:items-end">
     <AnimatePresence initial={false}>
       {raiseOpen && <motion.section
         key="raise-editor" id={panelId} aria-label="Choose a raise amount" className="raise-editor-container"
@@ -113,7 +113,7 @@ export function ActionBar({ legal, onAction, pot }) {
         </div>
       </motion.section>}
     </AnimatePresence>
-    <div className="action-buttons">
+    <div className="action-buttons landscape:flex landscape:items-center landscape:justify-end">
       <button type="button" onClick={() => onAction('fold')} className="action-button">Fold</button>
       <button type="button" onClick={() => onAction(legal.call ? 'call' : 'check')} className="action-button action-primary">
         <span>{legal.call ? 'Call' : 'Check'}</span>
