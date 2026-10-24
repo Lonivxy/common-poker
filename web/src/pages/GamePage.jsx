@@ -31,7 +31,7 @@ export function GamePage() {
   const [clock, setClock] = useState(() => ({ now: Date.now(), offset: 0 }))
   const creating = roomId === 'new'
   const requestedRoom = creating ? state?.room || undefined : roomId
-  const name = params.get('name') || sessionStorage.getItem('pokerName') || 'Player'
+  const name = params.get('name') || localStorage.getItem('pokerName') || 'Player'
 
   useEffect(() => {
     let active = true

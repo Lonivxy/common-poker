@@ -6,9 +6,9 @@ export function HomePage({ pending = false }) {
   const navigate = useNavigate()
   const { state } = useLocation()
   const [room, setRoom] = useState(state?.room || '')
-  const [name, setName] = useState(sessionStorage.getItem('pokerName') || '')
+  const [name, setName] = useState(localStorage.getItem('pokerName') || '')
   const enter = (target) => {
-    sessionStorage.setItem('pokerName', name.trim())
+    localStorage.setItem('pokerName', name.trim())
     navigate(`/game/${target}?name=${encodeURIComponent(name.trim())}`, { state: { room: target === 'new' ? room : target } })
   }
   const input = 'h-12 rounded-full border border-ink/40 bg-transparent px-6 text-center text-ink placeholder:text-ink-faint focus:border-ink focus:outline-none'
