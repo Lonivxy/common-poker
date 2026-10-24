@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { motion } from 'motion/react'
 import { PlayingCard } from './PlayingCard'
 
@@ -6,6 +7,9 @@ import { PlayingCard } from './PlayingCard'
 const TABLE_AREA = 'absolute left-[11%] right-[11%] top-[14%] bottom-[22%] portrait:max-sm:left-[5%] portrait:max-sm:right-[5%] portrait:min-sm:left-[10%] portrait:min-sm:right-[10%] portrait:top-[42%] portrait:max-sm:top-[44%] portrait:bottom-auto portrait:h-[max(13em,13%)]'
 
 export function Table({ board, pot }) {
+  // Only newly dealt cards animate; stagger each batch sequentially.
+  const dealt = useRef(0)
+  useEffect(() => { dealt.current = board.length })
   return <>
     <div className={`${TABLE_AREA} rounded-[999px] border-[0.14em] border-ink/70 bg-felt`} />
     <div className="absolute inset-x-0 top-[18%] flex items-center justify-center gap-[0.8em] text-[2em] portrait:top-[38%] portrait:max-sm:top-[37%]">
@@ -14,7 +18,7 @@ export function Table({ board, pot }) {
     <div className={`${TABLE_AREA} grid place-items-center`}>
       <div className="flex gap-[0.4em] portrait:max-sm:gap-[0.25em] portrait:max-sm:text-[0.95em]">
         {Array.from({ length: 5 }, (_, i) => board[i] ? (
-          <motion.div key={`${i}-${board[i].rank}-${board[i].suit}`} initial={{ opacity: 0, y: '-5.5em' }} animate={{ opacity: [0, 1, 1], y: ['-5.5em', '0.25em', '0em'] }} transition={{ delay: i < 3 ? i * 0.15 : 0, duration: 0.42, times: [0, 0.72, 1], ease: 'easeOut' }}>
+          <motion.div key={`${i}-${board[i].rank}-${board[i].suit}`} initial={{ opacity: 0, y: '-5.5em' }} animate={{ opacity: [0, 1, 1], y: ['-5.5em', '0.25em', '0em'] }} transition={{ delay: Math.max(0, i - dealt.current) * 0.15, duration: 0.42, times: [0, 0.72, 1], ease: 'easeOut' }}>
             <PlayingCard size="md" {...board[i]} />
           </motion.div>
         ) : (

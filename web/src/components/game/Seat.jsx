@@ -56,7 +56,7 @@ function Fan({ children }) {
   return <div className="flex [&>*:not(:first-child)]:-ml-[1.5em]">{children}</div>
 }
 
-function FlipCard({ card, tilt, revealed, onToggle, size = "lg" }) {
+function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0 }) {
   const dims = { sm: "h-[4.9em] w-[3.2em]", lg: "h-[5.5em] w-[4em]" }[size]
   return (
     <button
@@ -71,7 +71,7 @@ function FlipCard({ card, tilt, revealed, onToggle, size = "lg" }) {
         style={{ transformStyle: "preserve-3d" }}
         initial={{ rotateY: 0 }}
         animate={{ rotateY: revealed ? 180 : 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 22 }}
+        transition={{ type: "spring", stiffness: 260, damping: 22, delay }}
       >
         <div className="absolute inset-0 [backface-visibility:hidden]">
           <CardBack size={size} />
@@ -136,6 +136,7 @@ export function Seat({ side, name, stack, cards = [], state = "active", active, 
               card={c}
               tilt={tilt}
               size={size}
+              delay={i * 0.15}
               revealed={revealed}
               onToggle={() => setRevealed((r) => !r)}
             />
