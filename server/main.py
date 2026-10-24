@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .engine import Game, Player
 
-ORIGINS = {"https://commonpoker.vercel.app", "http://localhost:5173", "http://127.0.0.1:5173",
+ORIGINS = {"https://commonpoker.vercel.app", "https://poker.moreallure.work", "http://localhost:5173", "http://127.0.0.1:5173",
            "http://localhost:4173", "http://127.0.0.1:4173"}
 if os.getenv("LOCAL_ORIGIN"):
     ORIGINS.add(os.environ["LOCAL_ORIGIN"])
