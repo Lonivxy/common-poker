@@ -194,7 +194,7 @@ export function GamePage() {
           </div>)}
         </div>
       </main>
-      <footer className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3 portrait:relative portrait:inset-auto portrait:shrink-0 sm:px-6">
+      <footer className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3 portrait:relative portrait:inset-auto portrait:flex portrait:min-h-[4.25rem] portrait:shrink-0 portrait:flex-col portrait:justify-end sm:px-6">
         {error ? <p role="alert" className="mb-3 text-center text-sm text-red-300">{error}</p>
           : !connected && <p role="status" className="mb-3 text-center text-sm text-ink-dim">{status}</p>}
         <AnimatePresence initial={false}>
