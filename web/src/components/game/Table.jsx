@@ -27,8 +27,9 @@ export function Table({ board, pot }) {
     </div>
     <div className={`${TABLE_AREA} grid place-items-center`}>
       <div className="flex gap-[0.4em] portrait:max-sm:gap-[0.25em] portrait:max-sm:text-[0.95em]">
-        {Array.from({ length: 5 }, (_, i) => (
-          <div key={i} className="relative h-[8em] w-[5.4em] shrink-0">
+        {Array.from({ length: 5 }, (_, i) => {
+          const revealDelay = board.length === 3 && i !== 1 ? motionTokens.stagger.deal * 3 : 0
+          return <div key={i} className="relative h-[8em] w-[5.4em] shrink-0">
             <AnimatePresence initial={false} mode="wait">
               {board[i] ? (
                 <motion.div
@@ -43,7 +44,11 @@ export function Table({ board, pot }) {
                     y: 4,
                     transition: { duration: motionTokens.duration.exit, ease: motionTokens.ease.exit },
                   }}
-                  transition={reduce ? { duration: 0 } : motionTokens.spring.smooth}
+                  transition={reduce ? { duration: 0 } : {
+                    duration: motionTokens.duration.fast,
+                    delay: revealDelay,
+                    ease: motionTokens.ease.enter,
+                  }}
                 >
                   <motion.div
                     className="relative h-full w-full"
@@ -52,7 +57,7 @@ export function Table({ board, pot }) {
                     animate={{ rotateY: 180 }}
                     transition={reduce ? { duration: 0 } : {
                       duration: motionTokens.duration.considered,
-                      delay: i < 3 ? i * motionTokens.stagger.deal : 0,
+                      delay: revealDelay + motionTokens.duration.fast,
                       ease: motionTokens.ease.enter,
                     }}
                   >
@@ -69,7 +74,7 @@ export function Table({ board, pot }) {
               )}
             </AnimatePresence>
           </div>
-        ))}
+        })}
       </div>
     </div>
   </>
