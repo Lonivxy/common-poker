@@ -125,10 +125,10 @@ export function GamePage() {
 
   return (
     <div className="relative flex h-dvh flex-col overflow-hidden">
-      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 pt-3 sm:px-6">
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <span className="font-mono text-sm text-ink-dim">{game?.room || (creating ? '' : roomId)}</span>
         <AnimatePresence initial={false} mode="wait">
-          <motion.div key={turnLabel} aria-hidden="true" className="absolute left-1/2 top-3 -translate-x-1/2 rounded-full border border-ink/20 bg-bg/90 px-4 py-1.5 text-center text-xs text-ink-dim shadow-lg backdrop-blur-sm sm:text-sm"
+          <motion.div key={turnLabel} aria-hidden="true" className="absolute left-1/2 top-[calc(env(safe-area-inset-top)+0.75rem)] -translate-x-1/2 rounded-full border border-ink/20 bg-bg/90 px-4 py-1.5 text-center text-xs text-ink-dim shadow-lg backdrop-blur-sm sm:text-sm"
             initial={reduce ? false : { opacity: 0, y: -5, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: -3, transition: { duration: motionTokens.duration.exit } }}
@@ -168,8 +168,8 @@ export function GamePage() {
         </div>
       </header>
       <p className="sr-only" role="status">{game?.street}{game?.turn != null && ` · ${game.players[game.turn].name}'s turn`}</p>
-      <main className="grid min-h-0 flex-1 place-items-center overflow-x-clip px-2 py-1 pb-[var(--stage-bottom-pad)] portrait:max-sm:px-0 portrait:pt-[calc(env(safe-area-inset-top)+3.75rem)]">
-        <div style={{ fontSize: 'var(--stage-scale)' }} className="relative aspect-[13/5] max-h-full w-[min(90vw,1200px)] portrait:aspect-auto portrait:h-full portrait:min-sm:w-[90vw] portrait:max-sm:w-[calc(100vw_-_10px)]">
+      <main className="grid min-h-0 flex-1 place-items-center overflow-x-clip pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))] py-1 pt-[calc(env(safe-area-inset-top)+0.25rem)] pb-[calc(var(--stage-bottom-pad)+env(safe-area-inset-bottom))] portrait:max-sm:px-0 portrait:pt-[calc(env(safe-area-inset-top)+3.75rem)]">
+        <div style={{ fontSize: 'var(--stage-scale)' }} className="relative aspect-[13/5] max-h-full w-[min(calc(90vw_-_env(safe-area-inset-left)_-_env(safe-area-inset-right)),1200px)] portrait:aspect-auto portrait:h-full portrait:min-sm:w-[90vw] portrait:max-sm:w-[calc(100vw_-_10px)]">
           <Table board={game?.board || []} pot={displayPot} />
           <AnimatePresence initial={false}>
           {seats.map(p => <motion.div key={p.id} className={`absolute ${POSITIONS[p.side]}`}
@@ -194,11 +194,11 @@ export function GamePage() {
           </div>)}
         </div>
       </main>
-      <footer className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3 portrait:relative portrait:inset-auto portrait:flex portrait:min-h-[4.25rem] portrait:shrink-0 portrait:flex-col portrait:justify-end sm:px-6">
+      <footer className="absolute inset-x-0 bottom-0 z-20 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pb-[calc(env(safe-area-inset-bottom)+0.75rem)] portrait:relative portrait:inset-auto portrait:flex portrait:min-h-[4.25rem] portrait:shrink-0 portrait:flex-col portrait:justify-end sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         {error ? <p role="alert" className="mb-3 text-center text-sm text-red-300">{error}</p>
           : !connected && <p role="status" className="mb-3 text-center text-sm text-ink-dim">{status}</p>}
         <AnimatePresence initial={false}>
-          {!error && connected && game.street === 'showdown' && <motion.p key={game.message} role="status" className="absolute bottom-3 left-4 right-40 break-words text-left text-sm text-ink sm:left-6"
+          {!error && connected && game.street === 'showdown' && <motion.p key={game.message} role="status" className="absolute bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-[max(1rem,env(safe-area-inset-left))] right-[calc(10rem_+_env(safe-area-inset-right))] break-words text-left text-sm text-ink sm:left-[max(1.5rem,env(safe-area-inset-left))]"
             initial={reduce ? false : { opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
             exit={reduce ? { opacity: 1, y: 0, transition: { duration: 0 } } : {
