@@ -20,8 +20,4 @@ export const motionTokens = {
     card: 0.06,
     deal: 0.09,
   },
-  travel: {
-    card: 0.56,
-    chip: 0.64,
-  },
 }

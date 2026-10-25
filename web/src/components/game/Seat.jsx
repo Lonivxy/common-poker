@@ -152,7 +152,7 @@ export function BetBadge({ amount }) {
  * side: "left" | "right" | "top" | "hero" — composition per table position.
  * All sizes em-based; inherits --stage-scale from the stage element.
  */
-export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer, winner, dealFrom, dealKey = 0 }) {
+export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer, winner, dealKey = 0 }) {
   const reduce = useMotionPreference()
   const faded = state === "folded"
   const [revealed, setRevealed] = useState(true)
@@ -176,12 +176,10 @@ export function Seat({ side, name, stack, cards = [], state = "active", active, 
           return <motion.div key={`${dealKey}-${i}-${c.rank || "back"}-${c.suit || "back"}`} className="shrink-0"
             initial={reduce ? false : {
               opacity: 0,
-              x: dealFrom?.x ?? 0,
-              y: dealFrom?.y ?? -12,
-              scale: dealFrom ? 0.84 : 0.92,
-              rotate: dealFrom ? 8 : 0,
+              y: -12,
+              scale: 0.92,
             }}
-            animate={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={reduce ? { duration: 0 } : {
               ...motionTokens.spring.smooth,
               delay: i * motionTokens.stagger.deal,
