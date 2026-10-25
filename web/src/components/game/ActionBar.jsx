@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from "react"
-import { AnimatePresence, motion, useReducedMotion } from "motion/react"
+import { AnimatePresence, motion } from "motion/react"
 import { motionTokens } from "../../motion"
+import { useMotionPreference } from "../../hooks/useMotionPreference"
 
 export function ActionBar({ legal, onAction, pot }) {
   const base =
@@ -8,7 +9,7 @@ export function ActionBar({ legal, onAction, pot }) {
   const [raiseOpen, setRaiseOpen] = useState(false)
   const [raiseTo, setRaiseTo] = useState(legal.minRaise)
   const [selectedPreset, setSelectedPreset] = useState(null)
-  const reduce = useReducedMotion()
+  const reduce = useMotionPreference()
   const raisePanelId = useId()
   const raiseButton = useRef(null)
   const clamp = (value) => Math.min(legal.maxRaise, Math.max(legal.minRaise, value))

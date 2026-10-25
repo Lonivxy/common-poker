@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from 'motion/react'
+import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react'
 import { motionTokens } from '../../motion'
+import { useMotionPreference } from '../../hooks/useMotionPreference'
 import { PlayingCard } from './PlayingCard'
 
 // Felt inset area. Portrait phones run the felt edge-to-edge (5px padding via
@@ -8,7 +9,7 @@ import { PlayingCard } from './PlayingCard'
 const TABLE_AREA = 'absolute left-[11%] right-[11%] top-[14%] bottom-[22%] portrait:max-sm:left-[5%] portrait:max-sm:right-[5%] portrait:min-sm:left-[10%] portrait:min-sm:right-[10%] portrait:top-[42%] portrait:max-sm:top-[44%] portrait:bottom-auto portrait:h-[max(13em,13%)]'
 
 export function Table({ board, pot }) {
-  const reduce = useReducedMotion()
+  const reduce = useMotionPreference()
   const potValue = useMotionValue(pot)
   const formattedPot = useTransform(potValue, value => `$${Math.round(value).toLocaleString()}`)
   useEffect(() => {

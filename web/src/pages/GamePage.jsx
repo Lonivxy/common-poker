@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { motionTokens } from '../motion'
+import { useMotionPreference } from '../hooks/useMotionPreference'
 import { Table } from '../components/game/Table'
 import { Seat, StatusBadge, BetBadge } from '../components/game/Seat'
 import { ActionBar } from '../components/game/ActionBar'
@@ -31,7 +32,7 @@ export function GamePage() {
   const [error, setError] = useState('')
   const [status, setStatus] = useState('Connecting…')
   const [clock, setClock] = useState(() => ({ now: Date.now(), offset: 0 }))
-  const reduce = useReducedMotion()
+  const reduce = useMotionPreference()
   const creating = roomId === 'new'
   const requestedRoom = creating ? state?.room || undefined : roomId
   const name = params.get('name') || localStorage.getItem('pokerName') || 'Player'

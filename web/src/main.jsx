@@ -4,13 +4,17 @@ import { BrowserRouter } from 'react-router'
 import { MotionConfig } from 'motion/react'
 import './index.css'
 import App from './App.jsx'
+import { useMotionPreference } from './hooks/useMotionPreference'
+
+export function MotionPreferences({ children }) {
+  const reduce = useMotionPreference()
+  return <MotionConfig reducedMotion={reduce ? 'always' : 'never'}>{children}</MotionConfig>
+}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
-      <MotionConfig reducedMotion="user">
-        <App />
-      </MotionConfig>
+      <MotionPreferences><App /></MotionPreferences>
     </BrowserRouter>
   </StrictMode>,
 )

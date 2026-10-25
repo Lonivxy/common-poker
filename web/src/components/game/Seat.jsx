@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react"
-import { animate, motion, useMotionValue, useReducedMotion } from "motion/react"
+import { animate, motion, useMotionValue } from "motion/react"
 import { motionTokens } from "../../motion"
+import { useMotionPreference } from "../../hooks/useMotionPreference"
 import { CardBack, PlayingCard } from "./PlayingCard"
 
 function PersonGlyph() {
@@ -14,7 +15,7 @@ function PersonGlyph() {
 
 function Avatar({ active, deadline, clockOffset, name }) {
   const progress = useMotionValue(1)
-  const reduce = useReducedMotion()
+  const reduce = useMotionPreference()
   useEffect(() => {
     if (!active || !deadline) {
       progress.set(1)
@@ -56,7 +57,7 @@ function Fan({ children }) {
 }
 
 function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0 }) {
-  const reduce = useReducedMotion()
+  const reduce = useMotionPreference()
   const dims = { sm: "h-[4.9em] w-[3.2em]", lg: "h-[5.5em] w-[4em]" }[size]
   if (reduce) {
     return (

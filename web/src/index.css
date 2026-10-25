@@ -104,16 +104,28 @@ a:active,
   pointer-events: none;
 }
 
+html[data-reduce-motion="true"] button,
+html[data-reduce-motion="true"] a,
+html[data-reduce-motion="true"] [role="button"] {
+  transition: none !important;
+}
+
+html[data-reduce-motion="true"] button:active,
+html[data-reduce-motion="true"] a:active,
+html[data-reduce-motion="true"] [role="button"]:active {
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  button,
-  a,
-  [role="button"] {
+  html:not([data-reduce-motion="false"]) button,
+  html:not([data-reduce-motion="false"]) a,
+  html:not([data-reduce-motion="false"]) [role="button"] {
     transition: none !important;
   }
 
-  button:active,
-  a:active,
-  [role="button"]:active {
+  html:not([data-reduce-motion="false"]) button:active,
+  html:not([data-reduce-motion="false"]) a:active,
+  html:not([data-reduce-motion="false"]) [role="button"]:active {
     transform: none;
   }
 }
