@@ -116,8 +116,6 @@ export function GamePage() {
   const seats = game?.players.map((p, i) => ({ ...p, index: i, side: ['hero', 'left', 'top', 'right'][(i - hero + 4) % 4] })).filter(p => p.connected) || []
   const canStart = connected && game?.host === game?.you && ['waiting', 'showdown'].includes(game?.street)
   const ready = game?.players.filter(p => p.connected && p.stack > 0).length >= 2
-  const streetLabel = { waiting: 'Waiting', preflop: 'Preflop', flop: 'Flop', turn: 'Turn', river: 'River', showdown: 'Showdown' }[game?.street] || ''
-  const turnLabel = game?.turn == null ? streetLabel : `${streetLabel} · ${game.players[game.turn].name}'s turn`
   const displayPot = game?.street === 'showdown' ? 0 : game?.pot ?? 0
   const winnerIds = game?.street === 'showdown' ? (game.awards || []).map(award => award.player) : []
 
@@ -127,15 +125,6 @@ export function GamePage() {
     <div className="relative flex h-dvh flex-col overflow-hidden">
       <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:pl-[max(1.5rem,env(safe-area-inset-left))] sm:pr-[max(1.5rem,env(safe-area-inset-right))]">
         <span className="font-mono text-sm text-ink-dim">{game?.room || (creating ? '' : roomId)}</span>
-        <AnimatePresence initial={false} mode="wait">
-          <motion.div key={turnLabel} aria-hidden="true" className="absolute left-1/2 top-[calc(env(safe-area-inset-top)+0.75rem)] -translate-x-1/2 rounded-full border border-ink/20 bg-bg/90 px-4 py-1.5 text-center text-xs text-ink-dim shadow-lg backdrop-blur-sm sm:text-sm"
-            initial={reduce ? false : { opacity: 0, y: -5, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: -3, transition: { duration: motionTokens.duration.exit } }}
-            transition={reduce ? { duration: 0 } : motionTokens.spring.snappy}>
-            <span className="mr-1.5 inline-block size-1.5 rounded-full bg-accent align-middle" />{turnLabel}
-          </motion.div>
-        </AnimatePresence>
         <div className="relative" onKeyDown={event => { if (event.key === 'Escape' && menuOpen) closeMenu() }}>
           <button ref={menuButtonRef} type="button" aria-label={menuOpen ? 'Close menu' : 'Menu'} aria-expanded={menuOpen} aria-controls={menuId}
             onClick={() => setMenuOpen(open => !open)}
