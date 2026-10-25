@@ -42,11 +42,12 @@ function Avatar({ active, deadline, clockOffset, name }) {
   )
 }
 
-function Label({ name, stack, dealer, connected }) {
+function Label({ name, stack, dealer, connected, hand }) {
   return (
     <div className="leading-tight whitespace-nowrap">
       <div className="text-[0.95em] text-ink-dim" title={dealer ? "Dealer" : undefined}>{name}<span className="sr-only">{dealer ? " · dealer" : ""}{!connected ? " · offline" : ""}</span></div>
       <div className="font-mono text-[1.5em] font-light text-ink">${stack.toLocaleString()}</div>
+      {hand && <div className="mt-[0.2em] text-[0.8em] text-ink-dim">{hand}</div>}
     </div>
   )
 }
@@ -118,11 +119,11 @@ export function BetBadge({ amount }) {
  * side: "left" | "right" | "top" | "hero" — composition per table position.
  * All sizes em-based; inherits --stage-scale from the stage element.
  */
-export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer }) {
+export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer, handName }) {
   const faded = state === "folded"
   const [revealed, setRevealed] = useState(true)
   const avatar = <Avatar active={active} deadline={deadline} clockOffset={clockOffset} name={name} />
-  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} />
+  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} hand={side === "hero" ? handName : undefined} />
 
   const cardEls = cards.length ? (
     <div className={`flex ${faded ? "opacity-60" : ""}`}>

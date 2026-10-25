@@ -172,6 +172,7 @@ async def gameplay(ws: WebSocket):
                 elif code in rooms:
                     raise ValueError("Room number is already in use")
                 game = Game(code, owner_ip=ip)
+                game.rankings = bool(hello.get("rankings"))
                 rooms[code] = game
             elif hello.get("type") == "join":
                 game = rooms.get(code)
