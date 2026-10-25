@@ -104,6 +104,17 @@ a:active,
   pointer-events: none;
 }
 
+.raise-slider {
+  accent-color: var(--color-suit-dark);
+  cursor: ns-resize;
+}
+
+.raise-slider:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
+  border-radius: 999px;
+}
+
 html[data-reduce-motion="true"] button,
 html[data-reduce-motion="true"] a,
 html[data-reduce-motion="true"] [role="button"] {

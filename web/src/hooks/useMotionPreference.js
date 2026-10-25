@@ -27,6 +27,18 @@ function applyPreference(value) {
   }
 }
 
+export function setMotionPreference(value) {
+  if (typeof window === 'undefined') return
+  try {
+    if (value === null) window.localStorage.removeItem(STORAGE_KEY)
+    else window.localStorage.setItem(STORAGE_KEY, String(Boolean(value)))
+  } catch {
+    // Keep the setting usable for this page even when storage is unavailable.
+  }
+  applyPreference(value ?? readSystemPreference())
+  window.dispatchEvent(new Event(CHANGE_EVENT))
+}
+
 function subscribe(listener) {
   const onStorage = event => {
     if (event.key === STORAGE_KEY || event.key === null) listener()
@@ -48,4 +60,14 @@ export function useMotionPreference() {
 
   useEffect(() => applyPreference(reduce), [reduce])
   return reduce
+}
+
+export function useMotionPreferenceSettings() {
+  const stored = useSyncExternalStore(subscribe, readStoredPreference, () => null)
+  const system = useSystemReducedMotion()
+  return {
+    reduce: stored ?? Boolean(system),
+    override: stored,
+    setPreference: setMotionPreference,
+  }
 }

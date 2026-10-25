@@ -1,5 +1,5 @@
-import { useId, useRef, useState } from "react"
-import { AnimatePresence, motion } from "motion/react"
+import { useEffect, useId, useRef, useState } from "react"
+import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react"
 import { motionTokens } from "../../motion"
 import { useMotionPreference } from "../../hooks/useMotionPreference"
 
@@ -10,9 +10,20 @@ export function ActionBar({ legal, onAction, pot }) {
   const [raiseTo, setRaiseTo] = useState(legal.minRaise)
   const [selectedPreset, setSelectedPreset] = useState(null)
   const reduce = useMotionPreference()
+  const animatedRaiseTo = useMotionValue(raiseTo)
+  const formattedRaiseTo = useTransform(animatedRaiseTo, value => `$${Math.round(value).toLocaleString()}`)
   const raisePanelId = useId()
   const raiseButton = useRef(null)
   const clamp = (value) => Math.min(legal.maxRaise, Math.max(legal.minRaise, value))
+  useEffect(() => {
+    if (reduce) {
+      animatedRaiseTo.set(raiseTo)
+      return
+    }
+    const controls = animate(animatedRaiseTo, raiseTo, motionTokens.spring.snappy)
+    return () => controls.stop()
+  }, [animatedRaiseTo, raiseTo, reduce])
+
   const closeRaise = () => {
     setRaiseOpen(false)
     raiseButton.current?.focus({ preventScroll: true })
@@ -78,7 +89,7 @@ export function ActionBar({ legal, onAction, pot }) {
             )}
           </div>
           <div className="flex flex-col items-center gap-2">
-            <span className="w-16 text-center font-mono text-lg">${raiseTo.toLocaleString()}</span>
+            <motion.span aria-hidden="true" className="w-16 text-center font-mono text-lg tabular-nums">{formattedRaiseTo}</motion.span>
             <input
               type="range"
               min={legal.minRaise}
@@ -87,7 +98,7 @@ export function ActionBar({ legal, onAction, pot }) {
               value={raiseTo}
               disabled={legal.minRaise === legal.maxRaise}
               onChange={(e) => { setRaiseTo(Number(e.target.value)); setSelectedPreset(null) }}
-              className="w-1.5 min-h-24 flex-1 accent-[#292522] [direction:rtl] [writing-mode:vertical-lr]"
+              className="raise-slider w-1.5 min-h-24 flex-1 accent-[#292522] [direction:rtl] [writing-mode:vertical-lr]"
               aria-label="Raise to total for this street"
             />
           </div>
@@ -115,7 +126,7 @@ export function ActionBar({ legal, onAction, pot }) {
           }`}
         >
           <span>Raise</span>
-          {raiseOpen && <span className="w-8 text-right font-mono">${raiseTo.toLocaleString()}</span>}
+          {raiseOpen && <motion.span aria-hidden="true" className="w-8 text-right font-mono tabular-nums">{formattedRaiseTo}</motion.span>}
         </button>
       </div>
     </div>

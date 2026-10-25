@@ -68,6 +68,9 @@ class EngineTests(unittest.TestCase):
         g.showdown()
         self.assertEqual([p.stack for p in g.players], [150, 100, 100])
         self.assertEqual(g.message, "0 wins $150 (One pair) · 1 wins $100 (One pair)")
+        self.assertEqual(g.snapshot("0")["awards"], [
+            {"player": "0", "amount": 150}, {"player": "1", "amount": 100},
+        ])
 
     def test_split_and_odd_chip_order(self):
         g = Game("123456")
@@ -83,6 +86,7 @@ class EngineTests(unittest.TestCase):
         g = self.game()
         g.action(g.turn, "fold")
         self.assertEqual(g.message, "P1 wins $30 · All others folded")
+        self.assertEqual(g.snapshot("0")["awards"], [{"player": "1", "amount": 30}])
         self.assertEqual(g.snapshot("0")["players"][1]["cards"], [{}, {}])
 
     def test_bankrupt_players_refill_after_payout_only(self):
@@ -154,11 +158,11 @@ class EngineTests(unittest.TestCase):
         for _ in range(300):
             stacks = [rng.randrange(1, 1001) for _ in range(rng.randrange(2, 5))]
             funded = 0
-            def finish_and_refill(game, message):
+            def finish_and_refill(game, message, awards=None):
                 nonlocal funded
                 self.assertEqual(sum(p.stack for p in game.players), sum(stacks))
                 funded = 1000 * sum(p.connected and p.stack == 0 for p in game.players)
-                finish(game, message)
+                finish(game, message, awards)
             with patch.object(Game, "finish", finish_and_refill):
                 g = self.game(stacks)
                 for turn in range(200):

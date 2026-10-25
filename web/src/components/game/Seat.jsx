@@ -13,7 +13,7 @@ function PersonGlyph() {
   )
 }
 
-function Avatar({ active, deadline, clockOffset, name }) {
+function Avatar({ active, deadline, clockOffset, name, winner }) {
   const progress = useMotionValue(1)
   const reduce = useMotionPreference()
   useEffect(() => {
@@ -32,6 +32,13 @@ function Avatar({ active, deadline, clockOffset, name }) {
   }, [active, deadline, clockOffset, progress, reduce])
   return (
     <div role="img" aria-label={active ? `${name}'s turn` : name} className="relative">
+      {winner && <motion.div
+        aria-hidden="true"
+        className="absolute -inset-[0.3em] rounded-full border-[0.12em] border-accent shadow-[0_0_1.2em_rgb(195_161_134_/_0.45)]"
+        initial={reduce ? false : { opacity: 0, scale: 0.72 }}
+        animate={reduce ? { opacity: 1, scale: 1 } : { opacity: [0.55, 1, 0.72], scale: [1, 1.08, 1] }}
+        transition={reduce ? { duration: 0 } : { duration: 1.1, ease: motionTokens.ease.standard, repeat: 1 }}
+      />}
       <div className="relative grid size-[5.6em] shrink-0 place-items-center rounded-full bg-avatar ring-[0.14em] ring-ink/80 ring-offset-[0.28em] ring-offset-bg shadow-[0_0.2em_0.8em_rgb(0_0_0_/_0.4)]">
         <PersonGlyph />
       </div>
@@ -56,7 +63,7 @@ function Fan({ children }) {
   return <div className="flex [&>*:not(:first-child)]:-ml-[1.5em]">{children}</div>
 }
 
-function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0 }) {
+function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0, disabled = false }) {
   const reduce = useMotionPreference()
   const dims = { sm: "h-[4.9em] w-[3.2em]", lg: "h-[5.5em] w-[4em]" }[size]
   if (reduce) {
@@ -64,8 +71,9 @@ function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0 }) {
       <button
         type="button"
         onClick={onToggle}
+        disabled={disabled}
         aria-label={revealed ? "Hide hand" : "Reveal hand"}
-        className={`${dims} shrink-0 cursor-pointer`}
+        className={`${dims} shrink-0 cursor-pointer disabled:cursor-default`}
         style={{ rotate: `${tilt}deg` }}
       >
         {revealed ? <PlayingCard size={size} {...card} /> : <CardBack size={size} />}
@@ -76,8 +84,9 @@ function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0 }) {
     <button
       type="button"
       onClick={onToggle}
+      disabled={disabled}
       aria-label={revealed ? "Hide hand" : "Reveal hand"}
-      className={`${dims} shrink-0 cursor-pointer`}
+      className={`${dims} shrink-0 cursor-pointer disabled:cursor-default`}
       style={{ perspective: "40em", rotate: `${tilt}deg` }}
     >
       <motion.div
@@ -100,31 +109,42 @@ function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0 }) {
 
 // D means acted; X means folded. Positioned by GamePage.
 export function StatusBadge({ status }) {
+  const reduce = useMotionPreference()
   const shadow = "shadow-[0_0.15em_0.4em_rgb(0_0_0_/_0.5)]"
   if (status === "x") {
     return (
-      <div aria-label="Folded" className={`grid size-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar ${shadow}`}>
+      <motion.div aria-label="Folded" className={`grid size-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar ${shadow}`}
+        initial={reduce ? false : { opacity: 0, scale: 0.7, rotate: -35, y: 5 }} animate={{ opacity: 1, scale: 1, rotate: 0, y: 0 }}
+        exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, scale: 0.8, y: -4, transition: { duration: motionTokens.duration.exit } }}
+        transition={reduce ? { duration: 0 } : motionTokens.spring.snappy}>
         <svg viewBox="0 0 24 24" className="size-[45%]" stroke="var(--color-ink)" strokeWidth="2.4" strokeLinecap="round" aria-hidden>
           <path d="M6 6 18 18M18 6 6 18" />
         </svg>
-      </div>
+      </motion.div>
     )
   }
   return (
-    <div aria-label="Has acted" className={`grid size-[2em] place-items-center rounded-full bg-[#cfc3b4] font-card text-[1.05em] font-medium text-[#1d2021] ${shadow}`}>
+    <motion.div aria-label="Has acted" className={`grid size-[2em] place-items-center rounded-full bg-[#cfc3b4] font-card text-[1.05em] font-medium text-[#1d2021] ${shadow}`}
+      initial={reduce ? false : { opacity: 0, scale: 0.7, y: 5 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, scale: 0.8, y: -4, transition: { duration: motionTokens.duration.exit } }}
+      transition={reduce ? { duration: 0 } : motionTokens.spring.snappy}>
       D
-    </div>
+    </motion.div>
   )
 }
 
 // Bet badge: current call/raise amount sitting beside the status badge.
 // Hidden when the player hasn't bet this street.
 export function BetBadge({ amount }) {
+  const reduce = useMotionPreference()
   if (amount == null) return null
   return (
-    <div aria-label={`Street bet ${amount}`} className="grid h-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar px-[0.55em] font-mono text-[1em] text-ink shadow-[0_0.15em_0.4em_rgb(0_0_0_/_0.5)]">
+    <motion.div aria-label={`Street bet ${amount}`} className="grid h-[2em] place-items-center rounded-full border-[0.12em] border-ink/70 bg-avatar px-[0.55em] font-mono text-[1em] text-ink shadow-[0_0.15em_0.4em_rgb(0_0_0_/_0.5)]"
+      initial={reduce ? false : { opacity: 0, y: 9, scale: 0.85 }} animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: -6, scale: 0.9, transition: { duration: motionTokens.duration.exit } }}
+      transition={reduce ? { duration: 0 } : motionTokens.spring.snappy}>
       {amount}
-    </div>
+    </motion.div>
   )
 }
 
@@ -132,34 +152,57 @@ export function BetBadge({ amount }) {
  * side: "left" | "right" | "top" | "hero" — composition per table position.
  * All sizes em-based; inherits --stage-scale from the stage element.
  */
-export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer }) {
+export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer, winner, dealFrom, dealKey = 0 }) {
+  const reduce = useMotionPreference()
   const faded = state === "folded"
   const [revealed, setRevealed] = useState(true)
-  const avatar = <Avatar active={active} deadline={deadline} clockOffset={clockOffset} name={name} />
+  const avatar = <Avatar active={active} deadline={deadline} clockOffset={clockOffset} name={name} winner={winner} />
   const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} />
+  const foldOffset = {
+    left: { x: 18, y: 0 },
+    right: { x: -18, y: 0 },
+    top: { x: 0, y: 16 },
+    hero: { x: 0, y: -16 },
+  }[side] || { x: 0, y: 0 }
 
   const cardEls = cards.length ? (
-    <div className={`flex ${faded ? "opacity-60" : ""}`}>
+    <motion.div className="flex"
+      animate={faded ? { opacity: 0.38, x: foldOffset.x, y: foldOffset.y, scale: 0.92 } : { opacity: 1, x: 0, y: 0, scale: 1 }}
+      transition={reduce ? { duration: 0 } : motionTokens.spring.smooth}>
       <Fan>
         {cards.map((c, i) => {
           const size = side === "hero" ? "lg" : "sm"
           const tilt = i === 0 ? -9 : 6
-          return c.rank ? (
-            <FlipCard
-              key={i}
-              card={c}
-              tilt={tilt}
-              size={size}
-              delay={i * motionTokens.stagger.card}
-              revealed={revealed}
-              onToggle={() => setRevealed((r) => !r)}
-            />
-          ) : (
-            <CardBack key={i} tilt={tilt} size={size} folded={faded} />
-          )
+          return <motion.div key={`${dealKey}-${i}-${c.rank || "back"}-${c.suit || "back"}`} className="shrink-0"
+            initial={reduce ? false : {
+              opacity: 0,
+              x: dealFrom?.x ?? 0,
+              y: dealFrom?.y ?? -12,
+              scale: dealFrom ? 0.84 : 0.92,
+              rotate: dealFrom ? 8 : 0,
+            }}
+            animate={{ opacity: 1, x: 0, y: 0, scale: 1, rotate: 0 }}
+            transition={reduce ? { duration: 0 } : {
+              ...motionTokens.spring.smooth,
+              delay: i * motionTokens.stagger.deal,
+            }}>
+            {c.rank ? (
+              <FlipCard
+                card={c}
+                tilt={tilt}
+                size={size}
+                delay={i * motionTokens.stagger.card}
+                revealed={revealed && !faded}
+                disabled={faded}
+                onToggle={() => setRevealed((r) => !r)}
+              />
+            ) : (
+              <CardBack tilt={tilt} size={size} folded={faded} />
+            )}
+          </motion.div>
         })}
       </Fan>
-    </div>
+    </motion.div>
   ) : null
 
   if (state === "empty") {
