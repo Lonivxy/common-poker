@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
-import { animate, motion, useMotionValue, useTransform } from "motion/react"
+import { animate, motion, useMotionValue, useReducedMotion } from "motion/react"
+import { motionTokens } from "../../motion"
 import { CardBack, PlayingCard } from "./PlayingCard"
 
 function PersonGlyph() {
@@ -12,32 +13,30 @@ function PersonGlyph() {
 }
 
 function Avatar({ active, deadline, clockOffset, name }) {
-  const progress = useMotionValue(360)
-  const pie = useTransform(
-    progress,
-    (deg) => `conic-gradient(transparent ${deg}deg, rgb(0 0 0 / 0.35) ${deg}deg)`,
-  )
+  const progress = useMotionValue(1)
+  const reduce = useReducedMotion()
   useEffect(() => {
     if (!active || !deadline) {
-      progress.set(360)
+      progress.set(1)
       return
     }
     const seconds = Math.max(0, Math.min(20, (deadline * 1000 - Date.now() - clockOffset) / 1000))
-    progress.set((1 - seconds / 20) * 360)
-    const animation = animate(progress, 360, { duration: seconds, ease: "linear" })
+    if (reduce) {
+      progress.set(1)
+      return
+    }
+    progress.set(seconds / 20)
+    const animation = animate(progress, 0, { duration: seconds, ease: "linear" })
     return () => animation.stop()
-  }, [active, deadline, clockOffset, progress])
+  }, [active, deadline, clockOffset, progress, reduce])
   return (
     <div role="img" aria-label={active ? `${name}'s turn` : name} className="relative">
       <div className="relative grid size-[5.6em] shrink-0 place-items-center rounded-full bg-avatar ring-[0.14em] ring-ink/80 ring-offset-[0.28em] ring-offset-bg shadow-[0_0.2em_0.8em_rgb(0_0_0_/_0.4)]">
         <PersonGlyph />
       </div>
-      {/* timer pie shadows the avatar face as a growing sector */}
-      <motion.div
-        style={{ background: pie }}
-        className="pointer-events-none absolute inset-0 rounded-full"
-        aria-hidden
-      />
+      {active && <svg viewBox="0 0 64 64" className="turn-ring" aria-hidden="true">
+        <motion.circle cx="32" cy="32" r="30" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" strokeLinecap="round" style={{ pathLength: progress }} />
+      </svg>}
     </div>
   )
 }
@@ -57,7 +56,21 @@ function Fan({ children }) {
 }
 
 function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0 }) {
+  const reduce = useReducedMotion()
   const dims = { sm: "h-[4.9em] w-[3.2em]", lg: "h-[5.5em] w-[4em]" }[size]
+  if (reduce) {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={revealed ? "Hide hand" : "Reveal hand"}
+        className={`${dims} shrink-0 cursor-pointer`}
+        style={{ rotate: `${tilt}deg` }}
+      >
+        {revealed ? <PlayingCard size={size} {...card} /> : <CardBack size={size} />}
+      </button>
+    )
+  }
   return (
     <button
       type="button"
@@ -71,7 +84,7 @@ function FlipCard({ card, tilt, revealed, onToggle, size = "lg", delay = 0 }) {
         style={{ transformStyle: "preserve-3d" }}
         initial={{ rotateY: 0 }}
         animate={{ rotateY: revealed ? 180 : 0 }}
-        transition={{ type: "spring", stiffness: 260, damping: 22, delay }}
+        transition={{ ...motionTokens.spring.smooth, delay }}
       >
         <div className="absolute inset-0 [backface-visibility:hidden]">
           <CardBack size={size} />
@@ -136,7 +149,7 @@ export function Seat({ side, name, stack, cards = [], state = "active", active, 
               card={c}
               tilt={tilt}
               size={size}
-              delay={i * 0.15}
+              delay={i * motionTokens.stagger.card}
               revealed={revealed}
               onToggle={() => setRevealed((r) => !r)}
             />

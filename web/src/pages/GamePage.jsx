@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { motionTokens } from '../motion'
 import { Table } from '../components/game/Table'
 import { Seat, StatusBadge, BetBadge } from '../components/game/Seat'
 import { ActionBar } from '../components/game/ActionBar'
@@ -29,6 +31,7 @@ export function GamePage() {
   const [error, setError] = useState('')
   const [status, setStatus] = useState('Connecting…')
   const [clock, setClock] = useState(() => ({ now: Date.now(), offset: 0 }))
+  const reduce = useReducedMotion()
   const creating = roomId === 'new'
   const requestedRoom = creating ? state?.room || undefined : roomId
   const name = params.get('name') || localStorage.getItem('pokerName') || 'Player'
@@ -115,10 +118,20 @@ export function GamePage() {
       <p className="sr-only" role="status">{game?.street}{game?.turn != null && ` · ${game.players[game.turn].name}'s turn`}</p>
       <main className="grid min-h-0 flex-1 place-items-center overflow-x-clip px-2 py-1 pb-[var(--stage-bottom-pad)] portrait:max-sm:px-0 portrait:pt-[calc(env(safe-area-inset-top)+3.75rem)]">
         <div style={{ fontSize: 'var(--stage-scale)' }} className="relative aspect-[13/5] max-h-full w-[min(90vw,1200px)] portrait:aspect-auto portrait:h-full portrait:min-sm:w-[90vw] portrait:max-sm:w-[calc(100vw_-_10px)]">
-          <Table board={game?.board || []} pot={`$${(game?.pot ?? 0).toLocaleString()}`} />
-          {seats.map(p => <div key={p.id} className={`absolute ${POSITIONS[p.side]}`}>
+          <Table board={game?.board || []} pot={game?.pot ?? 0} />
+          <AnimatePresence initial={false}>
+          {seats.map(p => <motion.div key={p.id} className={`absolute ${POSITIONS[p.side]}`}
+            initial={reduce ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 1, y: 0, transition: { duration: 0 } } : {
+              opacity: 0,
+              y: -4,
+              transition: { duration: motionTokens.duration.exit, ease: motionTokens.ease.exit },
+            }}
+            transition={reduce ? { duration: 0 } : motionTokens.spring.smooth}>
             <Seat {...p} stack={p.stack} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer} />
-          </div>)}
+          </motion.div>)}
+          </AnimatePresence>
           {seats.map(p => <div key={p.id} className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-[0.4em] ${p.side === 'top' || p.side === 'right' ? 'flex-row-reverse' : ''} ${BADGES[p.side]}`}>
             {p.folded && game.street !== 'waiting' ? <StatusBadge status="x" /> : p.acted ? <StatusBadge status="d" /> : null}
             <BetBadge amount={p.bet || null} />
@@ -128,7 +141,17 @@ export function GamePage() {
       <footer className="absolute inset-x-0 bottom-0 z-20 px-4 pb-3 portrait:relative portrait:inset-auto portrait:shrink-0 sm:px-6">
         {error ? <p role="alert" className="mb-3 text-center text-sm text-red-300">{error}</p>
           : !connected && <p role="status" className="mb-3 text-center text-sm text-ink-dim">{status}</p>}
-        {!error && connected && game.street === 'showdown' && <p role="status" className="absolute bottom-3 left-4 right-40 break-words text-left text-sm text-ink sm:left-6">{game.message}</p>}
+        <AnimatePresence initial={false}>
+          {!error && connected && game.street === 'showdown' && <motion.p key={game.message} role="status" className="absolute bottom-3 left-4 right-40 break-words text-left text-sm text-ink sm:left-6"
+            initial={reduce ? false : { opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={reduce ? { opacity: 1, y: 0, transition: { duration: 0 } } : {
+              opacity: 0,
+              y: 2,
+              transition: { duration: motionTokens.duration.exit, ease: motionTokens.ease.exit },
+            }}
+            transition={reduce ? { duration: 0 } : motionTokens.spring.smooth}>{game.message}</motion.p>}
+        </AnimatePresence>
         {canStart ? <div className="flex justify-end"><button disabled={!ready} title={!ready ? 'Waiting for another player with chips' : undefined} onClick={() => send({ type: 'start' })} className="rounded-full bg-accent px-7 py-3 portrait:min-h-11 text-accent-ink disabled:opacity-40">{game.street === 'waiting' ? 'Deal' : 'Next hand'}</button></div>
           : game?.legal && connected ? <ActionBar key={`${game.street}-${game.deadline}`} legal={game.legal} pot={game.pot} onAction={(action, amount) => send({ type: 'action', action, amount, turn: game.deadline })} />
             : null}
