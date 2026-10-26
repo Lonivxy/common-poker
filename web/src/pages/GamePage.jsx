@@ -66,7 +66,7 @@ export function GamePage() {
       ws = new WebSocket(url)
       socket.current = ws
       let alive = Date.now()
-      ws.onopen = () => ws.send(JSON.stringify({ type: creating ? 'create' : 'join', room: requestedRoom, name }))
+      ws.onopen = () => ws.send(JSON.stringify({ type: creating ? 'create' : 'join', room: requestedRoom, name, rankings: creating ? !!state?.rankings : undefined }))
       ws.onmessage = (event) => {
         if (!active) return
         alive = Date.now()
@@ -102,7 +102,7 @@ export function GamePage() {
       }, 1000)
     }, 0)
     return () => { active = false; clearTimeout(open); if (ws) { clearInterval(ws.watchdog); ws.close() } }
-  }, [requestedRoom, creating, name, navigate])
+  }, [requestedRoom, creating, name, navigate, state?.rankings])
 
   const send = (data) => {
     if (socket.current?.readyState === WebSocket.OPEN) socket.current.send(JSON.stringify(data))
@@ -170,7 +170,7 @@ export function GamePage() {
               transition: { duration: motionTokens.duration.exit, ease: motionTokens.ease.exit },
             }}
             transition={reduce ? { duration: 0 } : motionTokens.spring.smooth}>
-            <Seat {...p} stack={p.stack} dealKey={dealKey} winner={winnerIds.includes(p.id)} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer} />
+            <Seat {...p} stack={p.stack} dealKey={dealKey} winner={winnerIds.includes(p.id)} state={p.folded && game.street !== 'waiting' ? 'folded' : 'active'} active={p.index === game.turn} deadline={game.deadline} clockOffset={clock.offset} dealer={p.index === game.dealer} handName={p.id === game.you ? game.myHand : undefined} />
           </motion.div>)}
           </AnimatePresence>
           {seats.map(p => <div key={p.id} className={`absolute z-10 flex -translate-x-1/2 -translate-y-1/2 items-center gap-[0.4em] ${p.side === 'top' || p.side === 'right' ? 'flex-row-reverse' : ''} ${BADGES[p.side]}`}>

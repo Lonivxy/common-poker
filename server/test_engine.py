@@ -25,10 +25,12 @@ class EngineTests(unittest.TestCase):
         self.assertEqual(rank(cards("As Ah Ad Ac Ks Kh Kd")), (7, 14, 13))
 
     def test_winning_hand_names(self):
-        expected = ["High card", "One pair", "Two pair", "Three of a kind", "Straight",
+        expected = ["King high", "One pair", "Two pair", "Three of a kind", "Straight",
                     "Flush", "Full house", "Four of a kind", "Straight flush"]
         for category, name in enumerate(expected):
             self.assertEqual(hand_name((category, 13)), name)
+        self.assertEqual(hand_name((0, 14)), "Ace high")
+        self.assertEqual(hand_name((0, 2)), "2 high")
         self.assertEqual(hand_name(rank(cards("Ts Js Qs Ks As"))), "Royal flush")
 
     def test_heads_up_blinds_and_street_reset(self):

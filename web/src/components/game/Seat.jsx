@@ -49,11 +49,12 @@ function Avatar({ active, deadline, clockOffset, name, winner }) {
   )
 }
 
-function Label({ name, stack, dealer, connected }) {
+function Label({ name, stack, dealer, connected, hand }) {
   return (
     <div className="leading-tight whitespace-nowrap">
       <div className="text-[0.95em] text-ink-dim" title={dealer ? "Dealer" : undefined}>{name}<span className="sr-only">{dealer ? " · dealer" : ""}{!connected ? " · offline" : ""}</span></div>
       <div className="font-mono text-[1.5em] font-light text-ink">${stack.toLocaleString()}</div>
+      {hand && <div className="mt-[0.2em] text-[0.8em] text-ink-dim">{hand}</div>}
     </div>
   )
 }
@@ -152,12 +153,12 @@ export function BetBadge({ amount }) {
  * side: "left" | "right" | "top" | "hero" — composition per table position.
  * All sizes em-based; inherits --stage-scale from the stage element.
  */
-export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer, winner, dealKey = 0 }) {
+export function Seat({ side, name, stack, cards = [], state = "active", active, deadline, clockOffset, connected, dealer, winner, dealKey = 0, handName }) {
   const reduce = useMotionPreference()
   const faded = state === "folded"
   const [revealed, setRevealed] = useState(true)
   const avatar = <Avatar active={active} deadline={deadline} clockOffset={clockOffset} name={name} winner={winner} />
-  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} />
+  const label = <Label name={name} stack={stack} dealer={dealer} connected={connected} hand={side === "hero" ? handName : undefined} />
   const foldOffset = {
     left: { x: 18, y: 0 },
     right: { x: -18, y: 0 },

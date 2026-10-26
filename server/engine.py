@@ -8,10 +8,14 @@ from dataclasses import dataclass, field
 INITIAL_STACK = 1000
 HAND_NAMES = ("High card", "One pair", "Two pair", "Three of a kind", "Straight",
               "Flush", "Full house", "Four of a kind", "Straight flush")
+PLURALS = {2: "2s", 3: "3s", 4: "4s", 5: "5s", 6: "6s", 7: "7s", 8: "8s", 9: "9s", 10: "10s",
+           11: "jacks", 12: "queens", 13: "kings", 14: "aces"}
 
 
 def hand_name(score):
-    return "Royal flush" if score[:2] == (8, 14) else HAND_NAMES[score[0]]
+    if score[0] == 8 and score[1] == 14: return "Royal flush"
+    if score[0]: return HAND_NAMES[score[0]]
+    return f"{PLURALS[score[1]][:-1].capitalize()} high"
 
 def rank(cards):
     def five(cs):
@@ -70,6 +74,7 @@ class Game:
         self.pending = set()
         self.message = "Waiting for players"
         self.awards = []
+        self.rankings = False
         self.updated = time.monotonic()
 
     def next(self, seat, candidates):
@@ -220,12 +225,16 @@ class Game:
 
     def snapshot(self, viewer):
         reveal = self.street == "showdown" and len(self.board) == 5
+        me = next((p for p in self.players if p.id == viewer), None)
+        my_hand = (hand_name(rank(me.cards + self.board))
+                   if self.rankings and me and me.cards and not me.folded and len(self.board) >= 3 else None)
         return {"type": "state", "room": self.code, "you": viewer, "street": self.street,
                 "dealer": self.dealer, "turn": self.turn, "deadline": self.deadline,
                 "serverTime": time.time(), "board": [card(c) for c in self.board],
                 "pot": sum(p.total for p in self.players), "message": self.message,
                 "awards": self.awards,
                 "host": next((p.id for p in self.players if p.connected), None),
+                "rankings": self.rankings, "myHand": my_hand,
                 "players": [{"id": p.id, "name": p.name, "stack": p.stack, "bet": p.bet,
                              "folded": p.folded, "acted": p.acted, "connected": p.connected,
                              "cards": [card(c) if p.id == viewer or (reveal and not p.folded) else {} for c in p.cards]}
